@@ -1,0 +1,2772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quaddra · Backoffice Diretoria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Identidade Yuny (institucional) */
+  --carvao:   #141414;
+  --offwhite: #E4E3DE;
+  --bege:     #C7B299;
+  --bege-dk:  #7A6448;
+  --azul:     #00B0B9;
+  --azul-dk:  #03787C;
+
+  --bg:       #F3F6F6;
+  --surface:  #FFFFFF;
+  --surface2: #EFF4F4;
+  --surface3: #B9C7C7;
+  --border:   rgba(15,23,23,0.08);
+  --border2:  rgba(15,23,23,0.15);
+  --text:     var(--carvao);
+  --text-muted: rgba(15,23,23,0.55);
+  --gold:     #C7B299;
+
+  /* Status — cores de borda lateral (compartilhado entre TODOS os projetos, não muda com o tema) */
+  --st-disponivel:       #9CA3AF;
+  --st-proposta:         #4ADE80;
+  --st-processo:         #22C55E;
+  --st-reserva_venda:    #F59E0B;
+  --st-contrato_enviado: #3B82F6;
+  --st-cv_assinado:      #15803D;
+  --st-suspensa:         #6B7280;
+
+  /* Motor de tema — trocado por selecionarProjeto() conforme o Quaddra escolhido */
+  --proj-primaria:        var(--azul);
+  --proj-primaria-escura: var(--azul-dk);
+  --proj-acento:          var(--bege);
+}
+
+/* ── RESET & BASE ── */
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* ══════════ TELA 0 · SELEÇÃO DE PROJETO (identidade Yuny, clean) ══════════ */
+#tela-selecao { min-height: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; background: var(--surface); }
+#tela-selecao.oculta { display: none; }
+
+.selecao-topbar {
+  height: 46px; background: var(--azul); display: flex; align-items: center; gap: 0.6rem;
+  padding: 0 1.5rem; flex-shrink: 0;
+}
+.selecao-topbar .grid-dots { color: rgba(255,255,255,0.85); font-size: 1.1rem; }
+.selecao-topbar .sp-label { color: #fff; font-size: 0.85rem; font-weight: 500; }
+.selecao-topbar .sp-user { margin-left: auto; color: rgba(255,255,255,0.9); font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+
+.selecao-brandbar {
+  height: 84px; background: var(--azul-dk); display: flex; align-items: center; gap: 0.9rem;
+  padding: 0 1.5rem; flex-shrink: 0;
+}
+.selecao-brandbar .yuny-word { font-size: 1.7rem; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+.selecao-brandbar .divider { width: 1px; height: 26px; background: rgba(255,255,255,0.3); }
+.selecao-brandbar .contexto { color: rgba(255,255,255,0.92); font-size: 1.05rem; font-weight: 500; }
+
+.selecao-conteudo { flex: 1; padding: 3rem 3rem 2.5rem; max-width: 1200px; width: 100%; margin: 0 auto; }
+.selecao-hero { display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-bottom: 2.5rem; }
+.selecao-hero h1 { font-size: 2.1rem; font-weight: 800; color: #111; line-height: 1.25; max-width: 640px; }
+.selecao-hero p { font-size: 0.95rem; color: var(--text-muted); margin-top: 0.7rem; max-width: 560px; line-height: 1.5; }
+.selecao-mark {
+  width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0;
+  background: conic-gradient(from 90deg, var(--bege) 0deg 180deg, var(--azul) 180deg 360deg);
+}
+
+.cards-projetos { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.card-projeto {
+  width: 320px; background: var(--surface); border-radius: 14px; overflow: hidden;
+  cursor: pointer; box-shadow: 0 2px 6px rgba(15,23,23,0.06), 0 10px 28px -14px rgba(15,23,23,0.18);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--border);
+}
+.card-projeto:hover { transform: translateY(-6px); box-shadow: 0 2px 6px rgba(15,23,23,0.08), 0 18px 40px -14px rgba(15,23,23,0.26); }
+.card-projeto .capa {
+  height: 130px; display: flex; align-items: center; justify-content: flex-start;
+  padding: 1.5rem; position: relative; overflow: hidden;
+}
+.card-projeto .capa::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 6px 6px; opacity: 0.5;
+}
+.card-projeto .capa .wordmark { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.02em; position: relative; z-index: 1; }
+.card-projeto .capa .wordmark .sub { display: block; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.22em; margin-top: 0.15rem; }
+.card-projeto .info { padding: 1.1rem 1.4rem 1.4rem; }
+.card-projeto .info .tag { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; display: block; }
+.card-projeto .info h3 { font-size: 1.05rem; color: var(--text); margin-bottom: 0.6rem; }
+.card-projeto .info .meta-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 0.6rem; }
+.card-projeto .info .meta-row b { color: var(--text); font-weight: 600; }
+.card-projeto .entrar { margin-top: 0.9rem; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.35rem; }
+
+.selecao-footer { margin-top: 2.5rem; font-size: 0.72rem; color: var(--text-muted); }
+
+/* ══════════ TELA -1 · LOGIN ══════════ */
+#tela-login { min-height: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; background: var(--surface); }
+#tela-login.oculta { display: none; }
+.login-conteudo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.login-card { width: 340px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 2px 6px rgba(15,23,23,0.06), 0 10px 28px -14px rgba(15,23,23,0.18); padding: 2rem 1.75rem; }
+.login-card h1 { font-size: 1.4rem; font-weight: 800; color: #111; margin-bottom: 0.4rem; }
+.login-card > p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.4; }
+.login-card .field { margin-bottom: 1rem; }
+.login-card .field label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.35rem; }
+.login-card .field input { width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; padding: 0.6rem 0.75rem; font-size: 0.9rem; color: var(--text); font-family: inherit; }
+.login-card .field input:focus { border-color: var(--azul); outline: none; }
+.login-erro { background: #450A0A; border: 1px solid #DC2626; color: #FCA5A5; font-size: 0.78rem; padding: 0.55rem 0.75rem; border-radius: 6px; margin-bottom: 1rem; }
+.login-card button { width: 100%; background: var(--azul-dk); color: #fff; border: none; border-radius: 6px; padding: 0.7rem; font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.login-card button:hover { background: var(--azul); }
+.login-card button:disabled { opacity: 0.6; cursor: default; }
+.btn-logout { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 0.35rem 0.7rem; border-radius: 6px; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; font-family: inherit; transition: background 0.2s; }
+.btn-logout:hover { background: rgba(255,255,255,0.26); }
+
+/* ══════════ TELA 1 · APP (identidade do projeto ativo) ══════════ */
+#tela-app { display: none; flex: 1; min-height: 0; flex-direction: column; }
+#tela-app.ativo { display: flex; }
+
+/* ── HEADER ── */
+header {
+  background: var(--proj-primaria);
+  border-bottom: 1px solid var(--proj-primaria-escura);
+  padding: 0 1.5rem;
+  height: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 1rem;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+.header-left { display: flex; align-items: center; gap: 1.5rem; }
+.btn-voltar-selecao {
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.25); color: #fff;
+  width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.95rem; transition: background 0.2s; flex-shrink: 0;
+}
+.btn-voltar-selecao:hover { background: rgba(255,255,255,0.26); }
+.logo-title { display: flex; align-items: baseline; gap: 0.75rem; }
+.logo-title h1 { font-size: 1rem; font-weight: 600; letter-spacing: 0.12em; color: #FFFFFF; text-transform: uppercase; }
+.logo-badge { font-size: 0.72rem; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.16); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.25); letter-spacing: 0.08em; }
+
+.nav-tabs { display: flex; gap: 0.25rem; }
+.tab-btn { background: transparent; border: none; color: rgba(255,255,255,0.75); padding: 0.45rem 1rem; font-size: 0.82rem; font-weight: 500; cursor: pointer; border-radius: 4px; transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem; font-family: inherit; }
+.tab-btn:hover { color: #FFFFFF; background: rgba(255,255,255,0.12); }
+.tab-btn.active { color: var(--proj-primaria-escura); background: #FFFFFF; border: 1px solid transparent; }
+
+.header-right { display: flex; align-items: center; gap: 0.75rem; }
+.sync-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: rgba(255,255,255,0.85); cursor: pointer; padding: 0.3rem 0.6rem; border-radius: 4px; transition: background 0.2s; }
+.sync-status:hover { background: rgba(255,255,255,0.14); }
+.sync-dot { width: 7px; height: 7px; background: #EF4444; border-radius: 50%; transition: all 0.3s; }
+.sync-dot.online { background: #4ADE80; box-shadow: 0 0 8px rgba(74,222,128,0.6); }
+.sync-dot.loading { background: var(--bege); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── TOAST ── */
+#toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; }
+.toast { padding: 0.75rem 1.25rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: auto; display: flex; align-items: center; gap: 0.5rem; max-width: 320px; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #052E16; border: 1px solid #15803D; color: #4ADE80; }
+.toast.error   { background: #450A0A; border: 1px solid #DC2626; color: #FCA5A5; }
+.toast.info    { background: #0C2340; border: 1px solid #3B82F6; color: #93C5FD; }
+
+/* ── TABS ── */
+.tab-content { flex: 1; display: none; overflow: hidden; }
+.tab-content.active { display: flex; }
+
+/* ── ESPELHO TAB ── */
+.panel-left  { flex: 1.2; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border-right: 1px solid var(--border); }
+.panel-right { flex: 0.8; background: var(--surface); overflow-y: auto; display: flex; flex-direction: column; border-left: 1px solid var(--border); }
+
+.search-bar { position: relative; }
+.search-bar input { background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; padding: 0.55rem 1rem 0.55rem 2.25rem; font-size: 0.85rem; color: var(--text); width: 100%; font-family: inherit; transition: border-color 0.2s; }
+.search-bar input:focus { border-color: var(--proj-primaria); outline: none; }
+.search-bar input::placeholder { color: var(--text-muted); }
+.search-bar i { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1rem; pointer-events: none; }
+
+.kpis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+.kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 6px; display: flex; flex-direction: column; gap: 0.2rem; min-height: 80px; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s; user-select: none; position: relative; }
+.kpi-card:hover { border-color: var(--border2); background: var(--surface2); transform: translateY(-1px); }
+.kpi-card.kpi-active { border-color: var(--proj-primaria); background: rgba(0,176,185,0.06); }
+.kpi-card.kpi-active::after { content: '✕ limpar'; position: absolute; top: 0.4rem; right: 0.6rem; font-size: 0.6rem; color: var(--proj-primaria-escura); opacity: 0.8; letter-spacing: 0.05em; }
+.kpi-card p { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 500; letter-spacing: 0.05em; }
+.kpi-card h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+.kpi-sub { font-size: 0.72rem; color: var(--bege-dk); font-weight: 500; display: flex; justify-content: space-between; margin-top: 0.1rem; }
+
+.espelho-container { background: var(--surface); border: 1px solid var(--border); padding: 1.25rem; border-radius: 8px; }
+.espelho-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap; }
+.espelho-cap-header { margin-bottom: 1rem; }
+.espelho-title { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; color: var(--bege-dk); text-transform: uppercase; }
+
+.espelho-cap-body { display: flex; gap: 1.5rem; align-items: flex-start; }
+#predioContainer { flex: 1; min-width: 0; }
+.grid-predio { display: flex; flex-direction: column-reverse; gap: 0.4rem; max-width: 520px; flex: 0 0 520px; padding: 0.5rem; }
+.andar-row { display: flex; gap: 0.4rem; align-items: center; }
+.label-andar { width: 36px; font-size: 0.7rem; color: var(--text-muted); text-align: right; flex-shrink: 0; }
+
+/* Visão "Todas as Torres" (só usada quando o projeto tem mais de 1 torre): prédios lado a lado, encolhidos */
+.grid-multi-torre { display: flex; gap: 0.4rem; align-items: flex-start; flex: 1; min-width: 0; overflow-x: auto; padding-bottom: 0.25rem; }
+.torre-bloco { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.torre-bloco-titulo { text-align: center; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--bege-dk); padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
+.grid-predio-compact { max-width: none; flex: none; gap: 0.4rem; padding: 0.25rem; }
+.grid-predio-compact .andar-row { gap: 0.4rem; }
+.grid-predio-compact .label-andar { width: 20px; font-size: 0.58rem; }
+.grid-predio-compact .unit-box { padding: 0.3rem 0.35rem; min-width: 78px; }
+.grid-predio-compact .unit-name { font-size: 0.66rem; }
+.grid-predio-compact .unit-meta { font-size: 0.52rem; flex-wrap: wrap; gap: 0.1rem; }
+.grid-predio-compact .unit-fase-badge { font-size: 0.48rem; padding: 0 3px; }
+.grid-predio-compact .unit-status-label { font-size: 0.52rem; margin-top: 0.1rem; }
+
+/* Sidebar lateral: legenda + resumo, largura fixa para não competir com o grid de unidades */
+.espelho-sidebar { flex: 0 0 230px; min-width: 210px; max-width: 260px; display: flex; flex-direction: column; justify-content: flex-start; gap: 1.25rem; }
+.legenda { display: flex; flex-direction: column; gap: 0.45rem; }
+.legenda-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.72rem; color: var(--text-muted); }
+.legenda-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+.resumo-espelho { border-top: 1px solid var(--border); padding-top: 1rem; }
+.resumo-titulo { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.6rem; }
+.resumo-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 0.4rem 0.7rem; padding: 0.3rem 0; font-size: 0.74rem; }
+.resumo-row-head { color: var(--text-muted); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); padding-bottom: 0.35rem; margin-bottom: 0.15rem; }
+.resumo-label { display: flex; align-items: center; gap: 0.4rem; color: var(--text); white-space: nowrap; }
+.resumo-dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+.resumo-qtd, .resumo-pct, .resumo-vgv { text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.resumo-qtd { color: var(--text); font-weight: 600; }
+.resumo-vgv { min-width: 78px; }
+.resumo-total-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 0.4rem 0.7rem; padding-top: 0.5rem; margin-top: 0.4rem; border-top: 1px solid var(--border2); font-size: 0.76rem; font-weight: 700; color: var(--bege-dk); }
+.resumo-total-row span:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+
+.unit-box { flex: 1; background: var(--surface2); border: 1px solid var(--border); padding: 0.65rem 0.75rem; border-radius: 4px; cursor: pointer; transition: border-color 0.15s, transform 0.15s; position: relative; min-width: 0; }
+.unit-box:hover { border-color: var(--proj-primaria); transform: translateY(-1px); }
+.unit-box.selected { border-color: var(--proj-primaria) !important; box-shadow: 0 0 14px rgba(0,176,185,0.18); }
+.unit-box.hidden-search { opacity: 0.18; pointer-events: none; }
+
+.unit-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+.unit-meta { font-size: 0.68rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-top: 0.15rem; align-items: center; }
+.unit-fase-badge { font-size: 0.6rem; padding: 1px 5px; border-radius: 3px; background: rgba(199,178,153,0.18); color: var(--bege-dk); font-weight: 600; flex-shrink: 0; }
+.unit-status-label { font-size: 0.68rem; margin-top: 0.2rem; font-weight: 500; color: var(--text-muted); }
+
+.u-disponivel       { background: var(--surface2); }
+.u-proposta         { background: var(--st-proposta); }
+.u-processo         { background: var(--st-processo); }
+.u-reserva_venda    { background: var(--st-reserva_venda); }
+.u-contrato_enviado { background: var(--st-contrato_enviado); }
+.u-cv_assinado      { background: var(--st-cv_assinado); }
+.u-suspensa         { background: var(--st-suspensa); opacity: 0.5; }
+
+.u-proposta .unit-name, .u-proposta .unit-meta, .u-proposta .unit-status-label,
+.u-processo .unit-name, .u-processo .unit-meta, .u-processo .unit-status-label,
+.u-reserva_venda .unit-name, .u-reserva_venda .unit-meta, .u-reserva_venda .unit-status-label,
+.u-contrato_enviado .unit-name, .u-contrato_enviado .unit-meta, .u-contrato_enviado .unit-status-label {
+  color: var(--carvao);
+}
+.u-cv_assinado .unit-name, .u-cv_assinado .unit-meta, .u-cv_assinado .unit-status-label,
+.u-suspensa .unit-name, .u-suspensa .unit-meta, .u-suspensa .unit-status-label {
+  color: #FFFFFF;
+}
+.u-proposta .unit-fase-badge, .u-processo .unit-fase-badge, .u-reserva_venda .unit-fase-badge, .u-contrato_enviado .unit-fase-badge {
+  background: rgba(20,20,20,0.14); color: var(--carvao);
+}
+.u-cv_assinado .unit-fase-badge, .u-suspensa .unit-fase-badge {
+  background: rgba(255,255,255,0.25); color: #FFFFFF;
+}
+
+/* ── GAVETA (PAINEL DIREITO) ── */
+.painel-vazio { padding: 3rem 2rem; text-align: center; color: var(--text-muted); margin: auto; }
+.painel-vazio i { font-size: 2.5rem; margin-bottom: 1rem; display: block; opacity: 0.4; }
+.painel-vazio p { font-size: 0.85rem; line-height: 1.6; }
+
+.editor-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
+.editor-header h2 { font-size: 1.1rem; color: var(--text); font-weight: 600; }
+.editor-header p { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
+.editor-body { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; }
+.editor-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); background: var(--surface2); display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
+
+/* ── FORMS ── */
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+label { font-size: 0.7rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+input, select, textarea { background: var(--surface2); border: 1px solid var(--border2); padding: 0.6rem 0.75rem; border-radius: 4px; color: var(--text); font-family: inherit; font-size: 0.88rem; width: 100%; transition: border-color 0.2s; }
+input:focus, select:focus, textarea:focus { border-color: var(--proj-primaria); outline: none; }
+select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+select option { background: var(--surface2); }
+textarea { resize: vertical; min-height: 65px; }
+
+/* ── ESTEIRA ── */
+.esteira-wrap { display: flex; flex-direction: column; gap: 0.4rem; }
+.step-btn-v { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0.75rem; border: 1px solid var(--border); background: var(--surface2); border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 0.8rem; color: var(--text-muted); transition: all 0.2s; text-align: left; width: 100%; }
+.step-btn-v:hover { border-color: var(--border2); color: var(--text); }
+.step-btn-v.active { background: rgba(199,178,153,0.15); border-color: rgba(199,178,153,0.4); color: var(--bege-dk); font-weight: 600; }
+.step-btn-v.done { opacity: 0.5; }
+.step-num { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; flex-shrink: 0; }
+.step-btn-v.active .step-num { background: var(--bege); border-color: var(--bege); color: var(--carvao); }
+.step-btn-v.done .step-num { background: #052E16; border-color: #15803D; color: #4ADE80; }
+
+/* ── FLUXO TABLE ── */
+.fin-table { width: 100%; border-collapse: collapse; }
+.fin-table th { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; padding: 0.5rem 0.6rem; text-align: left; border-bottom: 1px solid var(--border); font-weight: 500; letter-spacing: 0.05em; }
+.fin-table td { padding: 0.4rem 0.35rem; border-bottom: 1px solid var(--border); font-size: 0.88rem; vertical-align: middle; }
+.fin-table tr:last-child td { border-bottom: none; }
+.fin-table td input { padding: 0.4rem 0.5rem; font-size: 0.82rem; }
+.fin-total-row { display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.75rem; background: var(--surface2); border-radius: 4px; margin-top: 0.5rem; border: 1px solid var(--border); }
+.fin-total-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.fin-total-val { font-size: 1.05rem; font-weight: 600; color: var(--bege-dk); }
+
+/* ── BOTÕES ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.55rem 1.1rem; font-size: 0.82rem; font-weight: 500; border-radius: 4px; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; white-space: nowrap; }
+.btn-gold    { background: var(--bege); color: var(--carvao); font-weight: 600; }
+.btn-gold:hover { background: #B39F88; }
+.btn-sec     { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); }
+.btn-sec:hover { background: var(--surface3); }
+.btn-danger  { background: rgba(239,68,68,0.1); color: #EF4444; border: 1px solid rgba(239,68,68,0.2); padding: 0.35rem 0.5rem; }
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+.btn-sm      { padding: 0.3rem 0.65rem; font-size: 0.75rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── ABA FINANCEIRO ── */
+.panel-financeiro { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
+.panel-simulador { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg); }
+
+.filter-bar { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+.filter-options { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+.filter-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--bege-dk); letter-spacing: 0.05em; flex-shrink: 0; }
+.checkbox-group { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.checkbox-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; cursor: pointer; color: var(--text); }
+.checkbox-label input { width: 14px; height: 14px; accent-color: var(--bege-dk); cursor: pointer; flex-shrink: 0; }
+
+.action-group { display: flex; gap: 0.6rem; }
+
+.table-container { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; }
+.hide-unit-col { display: none !important; }
+
+#tabelaFluxoCompilado { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+#tabelaFluxoCompilado th { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface2); white-space: nowrap; font-weight: 500; }
+#tabelaFluxoCompilado td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+#tabelaFluxoCompilado tbody tr:last-child td { border-bottom: none; }
+#tabelaFluxoCompilado tbody tr:hover td { background: rgba(0,176,185,0.05); }
+
+.rel-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; gap: 1rem; }
+.rel-header-top { display: flex; align-items: center; gap: 0.6rem; }
+.rel-status-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.rel-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+.rel-count { font-size: 0.72rem; background: var(--surface2); border: 1px solid var(--border2); color: var(--text-muted); padding: 0.15rem 0.55rem; border-radius: 20px; }
+.rel-vgv-total { text-align: right; }
+.rel-vgv-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.15rem; }
+.rel-vgv-val { font-size: 1.1rem; font-weight: 600; color: var(--bege-dk); }
+
+.rel-body { flex: 1; overflow-y: auto; }
+.rel-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.rel-table thead th { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 500; padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); background: var(--surface2); position: sticky; top: 0; z-index: 1; }
+.rel-row { cursor: pointer; transition: background 0.15s; }
+.rel-row:hover td { background: rgba(199,178,153,0.04); }
+.rel-row:hover .rel-id .rel-badge { color: var(--bege-dk); }
+.rel-td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.rel-table tbody tr:last-child .rel-td { border-bottom: none; }
+
+.rel-id { min-width: 90px; }
+.rel-badge { display: block; font-weight: 600; color: var(--text); margin-bottom: 0.15rem; transition: color 0.15s; }
+.rel-tipo { font-size: 0.68rem; color: var(--text-muted); }
+.rel-substatus { display: block; font-size: 0.65rem; font-weight: 600; margin-top: 0.2rem; }
+.rel-cliente { color: var(--text); min-width: 100px; }
+.rel-vgv { text-align: right; font-weight: 500; color: var(--bege-dk); white-space: nowrap; min-width: 110px; }
+.rel-obs { font-size: 0.75rem; color: var(--text-muted); max-width: 160px; line-height: 1.4; }
+
+.cliente-mask { color: var(--text-muted); letter-spacing: 0.15em; font-size: 0.75rem; }
+.btn-ocultar-cli.ativo { background: var(--proj-primaria); color: #fff; border-color: var(--proj-primaria); }
+
+.rel-footer { padding: 0.65rem 1rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--text-muted); flex-shrink: 0; background: var(--surface2); }
+
+/* ══════════ SIMULADOR COMERCIAL (aba embutida) ══════════ */
+:root{
+  --ink:#0B4F52; --ink-soft:#03787C; --paper:#F5F6F5; --paper-raised:#FFFFFF;
+  --brass:#00B1BB; --brass-soft:#CFF0F2; --tan:#C7B39A; --tan-soft:#F1EAE0;
+  --brick:#8B3A2B; --brick-soft:#F1DCD5; --slate:#54666A; --line:#DAE2E1; --line-soft:#E9EFEE; --ok:#0E7D6B;
+  --shadow: 0 1px 2px rgba(3,90,94,.08), 0 8px 24px -12px rgba(3,90,94,.22); --radius: 10px;
+}
+#simComercial{ background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; width:100%; }
+#simComercial *{box-sizing:border-box;}
+#simComercial ::selection{background:var(--brass-soft);}
+#simComercial .app{max-width:1320px;margin:0 auto;padding:28px 32px 80px;}
+#simComercial .topbar{ display:flex;justify-content:space-between;align-items:flex-end; gap:24px;margin-bottom:22px;flex-wrap:wrap; }
+#simComercial .brand{display:flex;flex-direction:column;gap:2px;}
+#simComercial .brand .eyebrow{ font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em; text-transform:uppercase;color:var(--brass);font-weight:600; }
+#simComercial .brand h1{ font-family:'Fraunces',serif;font-weight:600;font-size:30px;margin:2px 0 0; letter-spacing:-.01em; }
+#simComercial .brand .sub{color:var(--slate);font-size:13.5px;margin-top:2px;}
+#simComercial .topbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+#simComercial .btn{ font-family:'Inter',sans-serif;font-size:13px;font-weight:600; border:1px solid var(--line);background:var(--paper-raised);color:var(--ink); padding:9px 14px;border-radius:8px;cursor:pointer;transition:.15s ease; display:inline-flex;align-items:center;gap:6px; }
+#simComercial .btn:hover{border-color:var(--ink-soft);}
+#simComercial .btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+#simComercial .btn.primary:hover{background:var(--ink-soft);}
+#simComercial .btn.ghost{background:transparent;}
+#simComercial .btn.active{background:var(--brass);border-color:var(--brass);color:#fff;}
+#simComercial .btn[disabled]{opacity:.4;cursor:not-allowed;}
+#simComercial .client-strip{ display:grid;grid-template-columns:1.2fr 1.4fr 1fr 1fr 1fr;gap:10px; background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius); padding:14px 16px;margin-bottom:6px;box-shadow:var(--shadow); }
+@media (max-width:980px){#simComercial .client-strip{grid-template-columns:1fr 1fr;}}
+#simComercial .field{display:flex;flex-direction:column;gap:4px;}
+#simComercial .field label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);font-weight:600;}
+#simComercial .field input, #simComercial .field select{ border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:14px; font-family:'Inter',sans-serif;color:var(--ink);background:#fff; }
+#simComercial .field input:focus, #simComercial .field select:focus{outline:2px solid var(--brass-soft);border-color:var(--brass);}
+#simComercial .field input[readonly]{background:var(--line-soft);color:var(--ink-soft);}
+#simComercial .hint{font-size:11.5px;color:var(--slate);line-height:1.5;margin-top:4px;}
+#simComercial .hint.warn{color:var(--brick);}
+#simComercial .hint.strip{margin:6px 0 18px 2px;}
+#simComercial .tabs{display:flex;gap:6px;margin-bottom:18px;}
+#simComercial .tab{ font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px; padding:10px 18px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--slate); border:1px solid transparent;border-bottom:none; }
+#simComercial .tab.active{background:var(--paper-raised);color:var(--ink);border-color:var(--line);box-shadow:0 -2px 0 var(--brass) inset;}
+#simComercial .layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
+@media (max-width:980px){#simComercial .layout{grid-template-columns:1fr;}}
+#simComercial .panel{ background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius); padding:20px;box-shadow:var(--shadow); }
+#simComercial .panel h2{ font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:0 0 14px; padding-bottom:10px;border-bottom:1px solid var(--line-soft); }
+#simComercial .panel h3{ font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--slate); font-weight:700;margin:18px 0 8px; }
+#simComercial .panel h3:first-of-type{margin-top:0;}
+#simComercial .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+#simComercial .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+#simComercial .pct-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;}
+#simComercial .pct-row label{font-size:13.5px;color:var(--ink-soft);font-weight:500;}
+#simComercial .pct-row .pct-input{ width:88px;display:flex;align-items:center;border:1px solid var(--line);border-radius:6px;overflow:hidden; }
+#simComercial .pct-input input{border:none;width:56px;padding:6px 4px 6px 8px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;text-align:right;}
+#simComercial .pct-input input:focus{outline:none;}
+#simComercial .pct-input span{background:var(--line-soft);padding:6px 8px;font-size:12px;color:var(--slate);font-family:'IBM Plex Mono',monospace;}
+#simComercial .sum-indicator{ display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:9px 10px; border-radius:6px;font-size:12.5px;font-weight:600;font-family:'IBM Plex Mono',monospace; background:var(--line-soft);color:var(--slate); }
+#simComercial .sum-indicator.ok{background:#E7F0EA;color:var(--ok);}
+#simComercial .sum-indicator.err{background:var(--brick-soft);color:var(--brick);}
+#simComercial .toggle-group{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px;}
+#simComercial .toggle-group button{ flex:1;padding:8px 6px;font-size:12.5px;font-weight:600;border:none;background:#fff;color:var(--slate);cursor:pointer; }
+#simComercial .toggle-group button.active{background:var(--ink);color:#fff;}
+#simComercial details.subpanel{border:1px solid var(--line);border-radius:8px;margin-top:16px;background:var(--paper);}
+#simComercial details.subpanel summary{padding:10px 12px;font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;}
+#simComercial details.subpanel summary::-webkit-details-marker{display:none;}
+#simComercial details.subpanel summary::after{content:'▾';color:var(--slate);}
+#simComercial details.subpanel[open] summary::after{content:'▴';}
+#simComercial details.subpanel .subpanel-body{padding:2px 12px 14px;}
+#simComercial .termos-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+#simComercial .termos-grid h4{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--brass);margin:0 0 8px;}
+#simComercial .main-col{display:flex;flex-direction:column;gap:18px;}
+#simComercial .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+@media (max-width:780px){#simComercial .cards{grid-template-columns:repeat(2,1fr);}}
+#simComercial .card{ background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius); padding:16px 16px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden; }
+#simComercial .card .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);font-weight:700;}
+#simComercial .card .v{font-family:'Fraunces',serif;font-size:23px;font-weight:600;margin-top:6px;letter-spacing:-.01em;}
+#simComercial .card .v small{font-family:'Inter',sans-serif;font-size:12px;color:var(--slate);font-weight:500;margin-left:3px;}
+#simComercial .card.accent{border-color:var(--brass);}
+#simComercial .card.accent::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--brass);}
+#simComercial .card.discount .v{color:var(--ok);}
+#simComercial .card.discount.negative .v{color:var(--brick);}
+#simComercial .card.muted .v{color:var(--slate);font-size:16px;}
+#simComercial .timeline-panel{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px 22px;box-shadow:var(--shadow);}
+#simComercial .timeline-panel h2{margin-bottom:4px;border:none;padding:0;}
+#simComercial .timeline-sub{font-size:12px;color:var(--slate);margin-bottom:16px;}
+#simComercial .timeline{position:relative;height:108px;margin:0 4px;}
+#simComercial .timeline-baseline{position:absolute;left:0;right:0;bottom:26px;height:1px;background:var(--line);}
+#simComercial .tl-bar{ position:absolute;bottom:26px;width:5px;background:var(--ink-soft);border-radius:2px 2px 0 0; transition:height .2s ease; }
+#simComercial .tl-bar.sinal{background:var(--brass);width:9px;border-radius:2px;}
+#simComercial .tl-bar.reforco{background:var(--brass);}
+#simComercial .tl-bar.chaves{background:var(--ink-soft);width:9px;border-radius:2px;}
+#simComercial .tl-label{position:absolute;bottom:0;font-size:9.5px;color:var(--slate);font-family:'IBM Plex Mono',monospace;transform:translateX(-50%);white-space:nowrap;}
+#simComercial .tl-legend{display:flex;gap:18px;margin-top:8px;flex-wrap:wrap;}
+#simComercial .tl-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--slate);}
+#simComercial .tl-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;}
+#simComercial .table-panel{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);padding:0;box-shadow:var(--shadow);overflow:hidden;}
+#simComercial .table-panel-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;}
+#simComercial .table-panel-head h2{border:none;padding:0;margin:0;}
+#simComercial .table-scroll{max-height:420px;overflow-y:auto;border-top:1px solid var(--line-soft);}
+#simComercial table{width:100%;border-collapse:collapse;font-size:13px;}
+#simComercial thead th{ position:sticky;top:0;background:var(--paper);text-align:left;font-size:10.5px; text-transform:uppercase;letter-spacing:.06em;color:var(--slate);font-weight:700; padding:9px 16px;border-bottom:1px solid var(--line);z-index:1; }
+#simComercial thead th.num{text-align:right;}
+#simComercial tbody td{padding:8px 16px;border-bottom:1px solid var(--line-soft);font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);}
+#simComercial tbody td.num{text-align:right;}
+#simComercial tbody tr:hover{background:var(--paper);}
+#simComercial tbody tr.milestone td{background:var(--brass-soft);font-weight:600;color:var(--ink);}
+#simComercial tbody tr.chaves-row td{background:var(--tan-soft);font-weight:600;color:var(--ink);}
+#simComercial tfoot td{padding:10px 16px;font-weight:700;border-top:2px solid var(--ink);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+#simComercial .custom-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+#simComercial .custom-row{border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--paper);}
+#simComercial .custom-row-top{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+#simComercial .custom-row-top select{flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;padding:6px 7px;font-size:12.5px;font-family:'Inter',sans-serif;background:#fff;}
+#simComercial .custom-row-top .qtd-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+#simComercial .custom-row-top .qtd-wrap label{font-size:10px;color:var(--slate);white-space:nowrap;}
+#simComercial .custom-row-top input.qtd{width:44px;border:1px solid var(--line);border-radius:6px;padding:6px 4px;font-size:12.5px;text-align:center;font-family:'IBM Plex Mono',monospace;}
+#simComercial .custom-row-bottom{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;}
+#simComercial .custom-row input.valor, #simComercial .custom-row input.data{ width:100%;min-width:0;border:1px solid var(--line);border-radius:6px;padding:6px 7px; font-size:12px;font-family:'IBM Plex Mono',monospace;box-sizing:border-box; }
+#simComercial .custom-row input.valor{text-align:right;}
+#simComercial .custom-row .data-auto{ width:100%;padding:6px 7px;font-size:11.5px;color:var(--slate);background:var(--line-soft); border-radius:6px;border:1px dashed var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+#simComercial .icon-btn{ width:24px;height:24px;border:none;background:var(--brick-soft);color:var(--brick); border-radius:6px;cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center; }
+#simComercial .add-row-btn{ border:1px dashed var(--line);background:transparent;border-radius:6px;padding:8px; font-size:12.5px;font-weight:600;color:var(--slate);cursor:pointer;width:100%; }
+#simComercial .add-row-btn:hover{border-color:var(--brass);color:var(--brass);}
+#simComercial.client-mode .no-print{display:none !important;}
+#simComercial.client-mode .app{max-width:1100px;}
+#simComercial.client-mode .panel.inputs{display:none;}
+#simComercial.client-mode .layout{grid-template-columns:1fr;}
+#simComercial .campo-oculto{ display:none !important; }
+@media print{
+  #simComercial{background:#fff;}
+  #simComercial .no-print, #simComercial .panel.inputs, #simComercial .tabs, #simComercial .topbar-actions{display:none !important;}
+  #simComercial .layout{grid-template-columns:1fr;}
+  #simComercial .app{padding:0;max-width:100%;}
+  #simComercial .card, #simComercial .panel, #simComercial .table-panel, #simComercial .timeline-panel, #simComercial .client-strip{box-shadow:none;border:1px solid #ccc;}
+}
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ══════ TELA -1 · LOGIN ══════ -->
+<div id="tela-login">
+  <div class="selecao-brandbar">
+    <span class="yuny-word">yuny</span>
+    <div class="divider"></div>
+    <span class="contexto">Backoffice Diretoria</span>
+  </div>
+  <div class="login-conteudo">
+    <div class="login-card">
+      <h1>Entrar</h1>
+      <p>Acesso restrito ao backoffice dos Quaddras. Informe seu usuário e senha.</p>
+      <div id="loginErro" class="login-erro" style="display:none"></div>
+      <div class="field">
+        <label>Usuário</label>
+        <input id="loginUsuario" type="text" autocomplete="username" onkeydown="if(event.key==='Enter')tentarLogin()">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input id="loginSenha" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')tentarLogin()">
+      </div>
+      <button id="loginBtn" onclick="tentarLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ TELA 0 · SELEÇÃO DE PROJETO ══════ -->
+<div id="tela-selecao" class="oculta">
+  <div class="selecao-brandbar">
+    <span class="yuny-word">yuny</span>
+    <div class="divider"></div>
+    <span class="contexto">Backoffice Diretoria</span>
+  </div>
+
+  <div class="selecao-conteudo">
+    <div class="selecao-hero">
+      <div>
+        <h1>Qual Quaddra você quer abrir?</h1>
+        <p>Escolha o empreendimento para acessar o espelho de vendas, o controle financeiro e o simulador comercial.</p>
+      </div>
+      <div class="selecao-mark"></div>
+    </div>
+
+    <div class="cards-projetos" id="cardsProjetos"><!-- montado via JS a partir de PROJECTS --></div>
+  </div>
+</div>
+
+<!-- ══════ TELA 1 · APP (tema dinâmico conforme projeto ativo) ══════ -->
+<div id="tela-app">
+
+<header>
+  <div class="header-left">
+    <button class="btn-voltar-selecao" onclick="voltarSelecao()" title="Trocar de Quaddra"><i class="ti ti-arrow-left"></i></button>
+    <div class="logo-title">
+      <h1 id="appHeaderTitulo">Quaddra</h1>
+      <span class="logo-badge">Backoffice · Diretoria</span>
+    </div>
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('espelho', event)">
+        <i class="ti ti-layout-dashboard"></i>Espelho de Vendas
+      </button>
+      <button class="tab-btn" onclick="switchTab('financeiro', event)">
+        <i class="ti ti-chart-bar"></i>Controle Financeiro
+      </button>
+      <button class="tab-btn" onclick="switchTab('simulador', event)">
+        <i class="ti ti-calculator"></i>Simulador Comercial
+      </button>
+    </nav>
+  </div>
+  <div class="header-right">
+    <div class="sync-status" onclick="carregarDados()" title="Clique para sincronizar">
+      <div id="syncDot" class="sync-dot"></div>
+      <span id="syncText">Conectando...</span>
+      <i class="ti ti-refresh" style="font-size:0.85rem; opacity:0.6"></i>
+    </div>
+    <button class="btn-logout" onclick="fazerLogout()" title="Sair"><i class="ti ti-logout"></i> Sair</button>
+  </div>
+</header>
+
+<!-- ABA ESPELHO -->
+<div id="tab-espelho" class="tab-content active">
+  <div class="panel-left">
+
+    <div class="search-bar">
+      <i class="ti ti-search"></i>
+      <input type="text" id="searchInput" placeholder="Buscar unidade ou cliente..." oninput="filtrarEspelho(this.value)">
+    </div>
+
+    <div class="kpis-grid">
+      <div class="kpi-card" id="kpiCard-CV_ASSINADO" onclick="filtrarPorStatus('CV_ASSINADO')" title="Clique para filtrar no espelho">
+        <p>VGV CV Assinado</p>
+        <h3 id="kpiVgvAssinado">R$ 0</h3>
+        <div class="kpi-sub"><span id="countAssinado">0 un</span><span style="color:#4ADE80">●</span></div>
+      </div>
+      <div class="kpi-card" id="kpiCard-PROCESSO" onclick="filtrarPorStatus('PROCESSO')" title="Clique para filtrar no espelho">
+        <p>VGV Em Processo</p>
+        <h3 id="kpiVgvProcesso">R$ 0</h3>
+        <div class="kpi-sub"><span id="countProcesso">0 un</span><span style="color:#3B82F6">●</span></div>
+      </div>
+      <div class="kpi-card" id="kpiCard-RESERVA_VENDA" onclick="filtrarPorStatus('RESERVA_VENDA')" title="Clique para filtrar no espelho">
+        <p>VGV Reserva Venda</p>
+        <h3 id="kpiVgvReserva">R$ 0</h3>
+        <div class="kpi-sub"><span id="countReserva">0 un</span><span style="color:#F59E0B">●</span></div>
+      </div>
+      <div class="kpi-card" id="kpiCard-PROPOSTA" onclick="filtrarPorStatus('PROPOSTA')" title="Clique para filtrar no espelho">
+        <p>VGV Em Proposta</p>
+        <h3 id="kpiVgvProposta">R$ 0</h3>
+        <div class="kpi-sub"><span id="countProposta">0 un</span><span style="color:#4ADE80">●</span></div>
+      </div>
+      <div class="kpi-card" id="kpiCard-DISPONIVEL" onclick="filtrarPorStatus('DISPONIVEL')" title="Clique para filtrar no espelho">
+        <p>Estoque Disponível</p>
+        <h3 id="kpiDisponivel">0 un</h3>
+        <div class="kpi-sub"><span id="countSuspensa" style="color:#888">0 un suspensas</span></div>
+      </div>
+    </div>
+
+    <div class="espelho-container">
+      <div class="espelho-top">
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap" id="torreSwitch"><!-- só aparece se o projeto tiver >1 torre --></div>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-sec btn-sm btn-ocultar-cli" id="btnOcultarCliEspelho" onclick="toggleClientesOcultos()" title="Ocultar nomes de clientes">
+            <i class="ti ti-eye-off"></i> Ocultar Clientes
+          </button>
+          <button class="btn btn-sec btn-sm" onclick="exportarEspelhoImagem()">
+            <i class="ti ti-camera"></i> Imagem
+          </button>
+        </div>
+      </div>
+      <div id="captureArea">
+        <div class="espelho-cap-header">
+          <div class="espelho-title">Espelho de Pavimentos</div>
+        </div>
+        <div class="espelho-cap-body">
+          <div id="predioContainer"></div>
+          <div class="espelho-sidebar">
+            <div class="legenda" id="legenda-status"></div>
+            <div class="resumo-espelho" id="resumoEspelho"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-right" id="painelDireto">
+    <div class="painel-vazio">
+      <i class="ti ti-building-store"></i>
+      <p>Selecione uma unidade no espelho<br>para editar status, esteira e fluxo financeiro.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ABA FINANCEIRO -->
+<div id="tab-financeiro" class="tab-content">
+  <div class="panel-financeiro">
+    <div class="filter-bar">
+      <div class="filter-options">
+        <span class="filter-title">Filtrar por Status:</span>
+        <div class="checkbox-group">
+          <label class="checkbox-label"><input type="checkbox" id="chkAssinado"       checked onchange="renderFinanceiro()"> <span style="color:#4ADE80">●</span> CV Assinado</label>
+          <label class="checkbox-label"><input type="checkbox" id="chkContrato"       onchange="renderFinanceiro()"> <span style="color:#3B82F6">●</span> Contrato Enviado</label>
+          <label class="checkbox-label"><input type="checkbox" id="chkReserva"        onchange="renderFinanceiro()"> <span style="color:#F59E0B">●</span> Reserva Venda</label>
+          <label class="checkbox-label"><input type="checkbox" id="chkProcesso"       onchange="renderFinanceiro()"> <span style="color:#22C55E">●</span> Processo</label>
+          <label class="checkbox-label"><input type="checkbox" id="chkProposta"       onchange="renderFinanceiro()"> <span style="color:#4ADE80">●</span> Proposta</label>
+        </div>
+      </div>
+      <div class="action-group">
+        <button class="btn btn-sec btn-sm btn-ocultar-cli" id="btnOcultarCliFin" onclick="toggleClientesOcultos()">
+          <i class="ti ti-eye-off"></i> Ocultar Clientes
+        </button>
+        <button class="btn btn-sec btn-sm" id="btnToggleUnidades" onclick="toggleVisibilidadeUnidades()">
+          <i class="ti ti-eye-off"></i> Esconder Unidades
+        </button>
+        <button class="btn btn-gold btn-sm" onclick="exportarFluxoExcel()">
+          <i class="ti ti-download"></i> Exportar Excel
+        </button>
+      </div>
+    </div>
+
+    <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.5rem">Clique no mês para ver o dia exato de cada parcela.</div>
+    <div class="table-container">
+      <table id="tabelaFluxoCompilado">
+        <thead></thead>
+        <tbody id="corpoFluxoCompilado"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ABA SIMULADOR COMERCIAL -->
+<div id="tab-simulador" class="tab-content">
+  <div class="panel-simulador">
+
+<div class="app" id="simComercial">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="eyebrow">Simulador Comercial</span>
+      <h1 id="projTitle" contenteditable="true">Quaddra — Proposta de Pagamento</h1>
+    </div>
+    <div class="topbar-actions no-print">
+      <button class="btn ghost" id="resetBtn">↺ Novo cliente</button>
+      <button class="btn" id="clientModeBtn">🖥 Modo cliente</button>
+      <button class="btn primary" id="printBtn">🖨 Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <div class="client-strip no-print">
+    <div class="field"><label>Cliente</label><input id="clienteNome" placeholder="Nome do cliente"></div>
+    <div class="field">
+      <label>Unidade</label>
+      <select id="unidadeSelect"><option value="">— selecionar unidade —</option></select>
+    </div>
+    <div class="field">
+      <label>Fase da tabela</label>
+      <select id="faseSelect">
+        <option value="lanc" selected>Lançamento</option>
+        <option value="pre">Pré-lançamento</option>
+      </select>
+    </div>
+    <div class="field"><label>Corretor</label><input id="corretorNome" placeholder="Seu nome"></div>
+    <div class="field"><label>Data da proposta</label><input id="dataProposta" type="date"></div>
+  </div>
+  <div class="hint strip no-print" id="unidadeInfoHint">Selecione uma unidade para carregar metragem e preço de tabela direto da planilha.</div>
+  <div class="hint strip no-print" id="unidadeIndisponiveisNote" style="color:var(--brick)"></div>
+
+  <div class="no-print" id="espelhoActionsBar" style="display:none;margin:-4px 0 18px;padding:12px 16px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:12.5px;color:var(--slate)">Status atual no Espelho: <strong id="espelhoStatusAtual" style="color:var(--ink)">—</strong></span>
+    <button class="btn" id="btnEntrarProcesso">📋 Entrar em processo</button>
+    <button class="btn primary" id="btnReservarUnidade">🔖 Reservar unidade</button>
+    <span class="hint" style="margin:0">Isso grava o status e este fluxo de pagamento direto na planilha (aba Espelho).</span>
+  </div>
+
+  <div class="tabs no-print">
+    <div class="tab active" data-flow="padrao" id="tabFlowPadraoLabel">Fluxo Padrão</div>
+    <div class="tab" data-flow="custom">Mês a Mês (personalizado)</div>
+  </div>
+
+  <div class="layout">
+    <!-- INPUT PANEL -->
+    <div class="panel inputs no-print" id="panelPadrao">
+      <h2>Parâmetros — Fluxo Padrão</h2>
+
+      <h3>Valor da unidade (proposta)</h3>
+      <div class="toggle-group">
+        <button data-mode="total" class="active">Valor total (R$)</button>
+        <button data-mode="m2">R$/m² × metragem</button>
+      </div>
+      <div id="valorTotalWrap" class="field">
+        <label>Valor total da proposta (R$)</label>
+        <input id="valorTotal" type="text" inputmode="decimal" value="1000000">
+      </div>
+      <div id="valorM2Wrap" style="display:none">
+        <div class="row2">
+          <div class="field"><label>R$ / m²</label><input id="valorM2" type="text" inputmode="decimal" value="30000"></div>
+          <div class="field"><label>Metragem (m²)</label><input id="metragemM2" type="text" inputmode="decimal" value="388,00"></div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>Metragem — para R$/m² de saída (m²)</label>
+        <input id="metragemRef" type="text" inputmode="decimal" value="388,00">
+      </div>
+
+      <h3>Estrutura do pagamento (%)</h3>
+      <div class="hint" style="margin-bottom:10px;display:none" id="estruturaPagamentoHint"></div>
+
+      <div class="pct-row"><label id="labelCampoEntrada">Ato</label><div class="pct-input"><input id="campoEntrada" type="text" value="5"><span>%</span></div></div>
+      <div class="pct-row" id="rowCampoJanela"><label>30/60 dias (2 parcelas)</label><div class="pct-input"><input id="campoJanela" type="text" value="5"><span>%</span></div></div>
+      <div class="pct-row"><label id="labelCampoMensais">Mensais</label><div class="pct-input"><input id="campoMensais" type="text" value="10"><span>%</span></div></div>
+
+      <div id="reforcoExtraContainer">
+        <div class="pct-row">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="reforcoExtraToggle" style="width:auto">
+            Reforço extra (<span id="reforcoExtraMesLabel">—</span>)
+          </label>
+          <div class="pct-input"><input id="reforcoExtraPct" type="text" value="15" disabled><span>%</span></div>
+        </div>
+        <div id="reforcoExtraFields" style="display:none;margin:-4px 0 12px;padding-left:26px">
+          <div class="field"><label>Mês do reforço</label><input id="reforcoExtraData" type="month" value="2026-12"></div>
+        </div>
+      </div>
+
+      <div class="pct-row"><label id="labelCampoAnuais">Anuais</label><div class="pct-input"><input id="campoAnuais" type="text" value="10"><span>%</span></div></div>
+      <div class="pct-row"><label id="labelCampoMilestone0">Chave</label><div class="pct-input"><input id="campoMilestone0" type="text" value="10"><span>%</span></div></div>
+      <div class="pct-row" id="rowCampoMilestone1"><label id="labelCampoMilestone1">Financiamento</label><div class="pct-input"><input id="campoMilestone1" type="text" value="60"><span>%</span></div></div>
+      <div class="sum-indicator" id="sumIndicator">Soma: 100%</div>
+
+      <h3>Cronograma</h3>
+      <div class="row2">
+        <div class="field"><label>Data do ato (sinal)</label><input id="dataAto" type="date"></div>
+        <div class="field"><label>Qtd. parcelas mensais</label><input id="numMensais" type="text" value="22"></div>
+      </div>
+      <div class="row2" style="margin-top:10px">
+        <div class="field"><label>1º reforço anual (mês)</label><input id="primeiroReforco" type="text" value="5"></div>
+        <div class="field"><label>Intervalo entre reforços</label><input id="intervaloReforco" type="text" value="12"></div>
+      </div>
+      <div class="hint" id="cronogramaHint" style="display:none"></div>
+
+      <h3>Valor de tabela (referência)</h3>
+      <div class="field">
+        <label>Valor de tabela — nominal (R$)</label>
+        <input id="valorReferencia" type="text" readonly value="">
+      </div>
+      <div class="hint" id="valorReferenciaHint">Selecione uma unidade acima para carregar o valor de tabela automaticamente.</div>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--slate);cursor:pointer">
+        <input type="checkbox" id="manualRefToggle" style="width:auto"> digitar valor de tabela manualmente (sem unidade real)
+      </label>
+
+      <h3>Taxa de desconto</h3>
+      <div class="field"><label>Taxa de desconto (a.a.)</label><input id="taxaAnual" type="text" value="8"></div>
+
+      <details class="subpanel">
+        <summary>Termos oficiais da tabela (usados para calcular o VP de tabela)</summary>
+        <div class="subpanel-body">
+          <p class="hint" id="termosNotaBase">O VP de tabela não é só o valor nominal descontado — é o valor de tabela pago nos termos padrão daquela fase (abaixo), depois descontado. Ajuste aqui se a incorporadora mudar as condições oficiais.</p>
+          <div class="row2" style="margin-bottom:12px">
+            <div class="field"><label>Tabela: 1º reforço anual (mês)</label><input id="tabPrimeiroReforco" type="text" value="5"></div>
+            <div class="field"><label>Tabela: intervalo entre reforços</label><input id="tabIntervaloReforco" type="text" value="12"></div>
+          </div>
+          <p class="hint">Esse cronograma da Tabela é independente do cronograma da Proposta ao lado — mudar o reforço da sua proposta não deve alterar o de tabela, e vice-versa.</p>
+          <div class="termos-grid">
+            <div>
+              <h4>Pré-lançamento</h4>
+              <div class="pct-row"><label id="labelTPreEntrada">Ato</label><div class="pct-input"><input id="tPreEntrada" type="text" value="5"><span>%</span></div></div>
+              <div class="pct-row" id="rowTPreJanela"><label>30/60 dias</label><div class="pct-input"><input id="tPreJanela" type="text" value="5"><span>%</span></div></div>
+              <div class="pct-row"><label>Mensais</label><div class="pct-input"><input id="tPreMensais" type="text" value="10"><span>%</span></div></div>
+              <div class="pct-row"><label>Anuais</label><div class="pct-input"><input id="tPreAnuais" type="text" value="10"><span>%</span></div></div>
+              <div class="pct-row"><label id="labelTPreMilestone0">Chave</label><div class="pct-input"><input id="tPreMilestone0" type="text" value="10"><span>%</span></div></div>
+              <div class="pct-row" id="rowTPreMilestone1"><label id="labelTPreMilestone1">Financiamento</label><div class="pct-input"><input id="tPreMilestone1" type="text" value="60"><span>%</span></div></div>
+            </div>
+            <div>
+              <h4>Lançamento</h4>
+              <div class="pct-row"><label id="labelTLancEntrada">Ato</label><div class="pct-input"><input id="tLancEntrada" type="text" value="5"><span>%</span></div></div>
+              <div class="pct-row" id="rowTLancJanela"><label>30/60 dias</label><div class="pct-input"><input id="tLancJanela" type="text" value="5"><span>%</span></div></div>
+              <div class="pct-row"><label>Mensais</label><div class="pct-input"><input id="tLancMensais" type="text" value="10"><span>%</span></div></div>
+              <div class="pct-row"><label>Anuais</label><div class="pct-input"><input id="tLancAnuais" type="text" value="10"><span>%</span></div></div>
+              <div class="pct-row"><label id="labelTLancMilestone0">Chave</label><div class="pct-input"><input id="tLancMilestone0" type="text" value="10"><span>%</span></div></div>
+              <div class="pct-row" id="rowTLancMilestone1"><label id="labelTLancMilestone1">Financiamento</label><div class="pct-input"><input id="tLancMilestone1" type="text" value="60"><span>%</span></div></div>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <!-- CUSTOM FLOW PANEL -->
+    <div class="panel inputs no-print" id="panelCustom" style="display:none">
+      <h2>Parâmetros — Mês a Mês</h2>
+      <div class="field"><label>Metragem (m²) — para R$/m²</label><input id="metragemCustom" type="text" value="388,00"></div>
+      <div class="field" style="margin-top:10px"><label>Data base (mês 0, para desconto/VP)</label><input id="dataBaseCustom" type="date"></div>
+      <div class="field" style="margin-top:10px"><label>Data de entrega (Chaves)</label><input id="dataEntregaCustom" type="date" value="2028-08-30"></div>
+      <div class="field" style="margin-top:10px"><label>Taxa de desconto (a.a.)</label><input id="taxaAnualCustom" type="text" value="8"></div>
+
+      <h3>Valor de tabela (referência)</h3>
+      <div class="field">
+        <label>Valor de tabela — nominal (R$)</label>
+        <input id="valorReferenciaCustom" type="text" readonly value="">
+      </div>
+      <div class="hint" id="valorReferenciaCustomHint">Selecione uma unidade acima para carregar o valor de tabela automaticamente.</div>
+
+      <h3>Parcelas</h3>
+      <div class="hint" style="margin-bottom:10px">Nº de parcelas · tipo · valor de cada uma · data de início. "Chave" trava sempre na data de entrega definida acima.</div>
+      <div class="custom-rows" id="customRows"></div>
+      <button class="add-row-btn" id="addRowBtn">+ adicionar parcela</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="main-col">
+      <div class="cards">
+        <div class="card accent"><div class="k">Valor total (proposta)</div><div class="v" id="outTotal">—</div></div>
+        <div class="card"><div class="k">VP da proposta</div><div class="v" id="outVP">—</div></div>
+        <div class="card"><div class="k">R$ / m²</div><div class="v" id="outM2">—</div></div>
+        <div class="card muted"><div class="k">Valor original (tabela)</div><div class="v" id="outTabelaNominal">—</div></div>
+        <div class="card muted"><div class="k">VP de tabela</div><div class="v" id="outTabelaVP">—</div></div>
+        <div class="card" id="outDescNomCard"><div class="k">Desconto Nominal</div><div class="v" id="outDescNom">—</div></div>
+        <div class="card" id="outDescPvCard"><div class="k">Desconto no PV</div><div class="v" id="outDescPv">—</div></div>
+      </div>
+
+      <div class="panel no-print" id="pvFixPanel" style="display:none">
+        <h2 style="display:flex;justify-content:space-between;align-items:center">
+          Zerar desconto no PV
+          <button class="btn ghost" id="pvFixClose" style="padding:4px 8px">×</button>
+        </h2>
+        <div class="toggle-group">
+          <button data-pvmode="parcela" class="active">Aplicar numa parcela</button>
+          <button data-pvmode="total">Aplicar no valor total</button>
+        </div>
+        <div id="pvFixRowWrap" class="field">
+          <label>Parcela que vai receber o ajuste</label>
+          <select id="pvFixRowSelect"></select>
+        </div>
+        <div class="hint" id="pvFixExplain"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn primary" id="pvFixApply">Aplicar ajuste</button>
+          <button class="btn ghost" id="pvFixRemove">Remover ajuste</button>
+        </div>
+      </div>
+      <button class="btn no-print" id="pvFixOpenBtn" style="align-self:flex-start;display:none">⚖ Zerar desconto no PV</button>
+
+      <div class="timeline-panel">
+        <h2>Formato do fluxo</h2>
+        <div class="timeline-sub">Cada barra é um pagamento; altura proporcional ao valor.</div>
+        <div class="timeline" id="timeline"></div>
+        <div class="tl-legend">
+          <span><i style="background:var(--brass)"></i>Entrada / Reforço anual</span>
+          <span><i style="background:var(--ink-soft)"></i>Mensal</span>
+          <span><i style="background:var(--ink-soft)"></i>Chave(s) / Financiamento</span>
+        </div>
+      </div>
+
+      <div class="table-panel">
+        <div class="table-panel-head">
+          <h2>Cronograma detalhado — Proposta</h2>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Mês</th><th>Data</th><th>Descrição</th><th class="num">Valor (R$)</th><th class="num">VP (R$)</th></tr></thead>
+            <tbody id="scheduleBody"></tbody>
+            <tfoot><tr><td colspan="3">Total</td><td class="num" id="footNominal">—</td><td class="num" id="footVP">—</td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div>
+</div>
+
+</div><!-- fim #tela-app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  ÁRVORES DE UNIDADES — dados reais de cada projeto
+// ═══════════════════════════════════════════════════════════════════
+function buildTorresLorenaTree() {
+  const list = [];
+  function addUnidade(torre, prefixo, numero, andar, final, metragem, vagas, valorTabela, tipo, especial) {
+    list.push({
+      id_unidade: `${prefixo}${numero}`,
+      numero_unidade: String(numero),
+      torre, andar, final, metragem, vagas,
+      valor_tabela: valorTabela,
+      tipo,
+      especial: especial || null,
+      status_espelho: "DISPONIVEL",
+      cliente_nome: "",
+      observacoes: "",
+      fase_esteira: 1,
+      fluxo_financeiro: []
+    });
+  }
+  // ---------- TORRE PARQUE — 14 unidades, só final 1 ----------
+  addUnidade("Parque", "P", 11,  1, 1, 468.19, 5, 14645528, "Garden", "Garden G");
+  addUnidade("Parque", "P", 21,  2, 1, 387.98, 4, 13571829, "Tipo");
+  addUnidade("Parque", "P", 31,  3, 1, 388.96, 4, 13905205, "Tipo");
+  addUnidade("Parque", "P", 41,  4, 1, 388.65, 4, 14192597, "Tipo");
+  addUnidade("Parque", "P", 51,  5, 1, 388.05, 4, 14469644, "Tipo");
+  addUnidade("Parque", "P", 61,  6, 1, 387.98, 4, 14690361, "Tipo");
+  addUnidade("Parque", "P", 71,  7, 1, 388.16, 4, 14920276, "Tipo");
+  addUnidade("Parque", "P", 81,  8, 1, 387.98, 4, 15137544, "Tipo");
+  addUnidade("Parque", "P", 91,  9, 1, 388.29, 4, 15447928, "Tipo");
+  addUnidade("Parque", "P", 101, 10, 1, 388.05, 4, 15736471, "Tipo");
+  addUnidade("Parque", "P", 111, 11, 1, 388.78, 4, 16065248, "Tipo");
+  addUnidade("Parque", "P", 121, 12, 1, 387.74, 4, 16469897, "Tipo");
+  addUnidade("Parque", "P", 131, 13, 1, 388.29, 4, 16941221, "Tipo");
+  addUnidade("Parque", "P", 141, 14, 1, 714.97, 6, 31794821, "Cobertura", "Cobertura");
+  // ---------- TORRE JARDINS — 14 unidades, só final 1 ----------
+  addUnidade("Jardins", "J", 11,  1, 1, 595.82, 4, 16875695, "Garden", "Garden P");
+  addUnidade("Jardins", "J", 21,  2, 1, 387.98, 4, 13571829, "Tipo");
+  addUnidade("Jardins", "J", 31,  3, 1, 388.29, 4, 13881064, "Tipo");
+  addUnidade("Jardins", "J", 41,  4, 1, 387.98, 4, 14168456, "Tipo");
+  addUnidade("Jardins", "J", 51,  5, 1, 388.29, 4, 14477691, "Tipo");
+  addUnidade("Jardins", "J", 61,  6, 1, 387.98, 4, 14690361, "Tipo");
+  addUnidade("Jardins", "J", 71,  7, 1, 388.36, 4, 14928323, "Tipo");
+  addUnidade("Jardins", "J", 81,  8, 1, 387.98, 4, 15137544, "Tipo");
+  addUnidade("Jardins", "J", 91,  9, 1, 388.29, 4, 15447928, "Tipo");
+  addUnidade("Jardins", "J", 101, 10, 1, 387.80, 4, 15727274, "Tipo");
+  addUnidade("Jardins", "J", 111, 11, 1, 388.29, 4, 16045705, "Tipo");
+  addUnidade("Jardins", "J", 121, 12, 1, 387.98, 4, 16480243, "Tipo");
+  addUnidade("Jardins", "J", 131, 13, 1, 388.29, 4, 16941221, "Tipo");
+  addUnidade("Jardins", "J", 141, 14, 1, 714.97, 6, 31794821, "Cobertura", "Cobertura");
+  // ---------- TORRE EUROPA — 28 unidades, final 1 e final 2 ----------
+  addUnidade("Europa", "E", 11,  1, 1, 300.98, 4, 10296703, "Tipo");
+  addUnidade("Europa", "E", 21,  2, 1, 300.98, 4, 10528916, "Tipo");
+  addUnidade("Europa", "E", 31,  3, 1, 301.05, 4, 10762279, "Tipo");
+  addUnidade("Europa", "E", 41,  4, 1, 309.90, 4, 11091056, "Tipo");
+  addUnidade("Europa", "E", 51,  5, 1, 300.80, 4, 11216359, "Tipo");
+  addUnidade("Europa", "E", 61,  6, 1, 300.98, 4, 11395692, "Tipo");
+  addUnidade("Europa", "E", 71,  7, 1, 300.74, 4, 11560081, "Tipo");
+  addUnidade("Europa", "E", 81,  8, 1, 301.82, 4, 11776200, "Tipo");
+  addUnidade("Europa", "E", 91,  9, 1, 300.74, 4, 11964730, "Tipo");
+  addUnidade("Europa", "E", 101, 10, 1, 300.98, 4, 12206140, "Tipo");
+  addUnidade("Europa", "E", 111, 11, 1, 301.05, 4, 12440652, "Tipo");
+  addUnidade("Europa", "E", 121, 12, 1, 302.04, 4, 12829207, "Tipo");
+  addUnidade("Europa", "E", 131, 13, 1, 300.98, 4, 13131544, "Tipo");
+  addUnidade("Europa", "E", 141, 14, 1, 546.81, 5, 24413429, "Cobertura", "Cobertura");
+  addUnidade("Europa", "E", 12,  1, 2, 300.98, 4, 10296703, "Tipo");
+  addUnidade("Europa", "E", 22,  2, 2, 300.98, 4, 10528916, "Tipo");
+  addUnidade("Europa", "E", 32,  3, 2, 300.98, 4, 10759980, "Tipo");
+  addUnidade("Europa", "E", 42,  4, 2, 300.84, 4, 10986445, "Tipo");
+  addUnidade("Europa", "E", 52,  5, 2, 300.98, 4, 11222107, "Tipo");
+  addUnidade("Europa", "E", 62,  6, 2, 300.98, 4, 11395692, "Tipo");
+  addUnidade("Europa", "E", 72,  7, 2, 301.47, 4, 11588820, "Tipo");
+  addUnidade("Europa", "E", 82,  8, 2, 309.93, 4, 12092332, "Tipo");
+  addUnidade("Europa", "E", 92,  9, 2, 300.80, 4, 11967029, "Tipo");
+  addUnidade("Europa", "E", 102, 10, 2, 300.98, 4, 12206140, "Tipo");
+  addUnidade("Europa", "E", 112, 11, 2, 300.98, 4, 12437203, "Tipo");
+  addUnidade("Europa", "E", 122, 12, 2, 300.98, 4, 12784374, "Tipo");
+  addUnidade("Europa", "E", 132, 13, 2, 300.98, 4, 13131544, "Tipo");
+  addUnidade("Europa", "E", 142, 14, 2, 546.57, 5, 24399634, "Cobertura", "Cobertura");
+  return list;
+}
+
+function buildJesuinoTree() {
+  const list = [];
+  function add(id, andar, final, metragem, tipo){
+    list.push({ id_unidade:id, numero_unidade:id, torre:null, andar, final, metragem, vagas:null,
+      valor_tabela:null, tipo, especial:null, status_espelho:"DISPONIVEL", cliente_nome:"",
+      observacoes:"", fase_esteira:1, fluxo_financeiro:[] });
+  }
+  add("21", 2, 1, 478, "Garden");
+  for (let a = 3; a <= 27; a++) add(`${a}1`, a, 1, 387, "Tipo");
+  add("281", 28, 1, 609, "Cobertura");
+  add("22", 2, 2, 349, "Garden");
+  for (let a = 3; a <= 6; a++) add(`${a}2`, a, 2, 326, "Tipo");
+  add("72", 7, 2, 545, "Duplex");
+  return list;
+}
+
+// Tabela de preço oficial do Jesuíno (R$/m² por fase) — recalculada a partir das fórmulas
+// reais da planilha ESPELHO + Espelho_2 (ver nota original no simulador do Jesuíno).
+const JESUINO_PRICING = [
+  {u:'281', label:'281 (Duplex)', m:611.40, pre:53168.14, lanc:57114.13},
+  {u:'271', label:'271', m:393.43, pre:51123.21, lanc:54917.44},
+  {u:'261', label:'261', m:393.43, pre:50243.94, lanc:53972.91},
+  {u:'251', label:'251', m:393.51, pre:49379.80, lanc:53044.63},
+  {u:'241', label:'241', m:393.05, pre:48650.04, lanc:52260.72},
+  {u:'231', label:'231', m:393.05, pre:47931.08, lanc:51488.39},
+  {u:'221', label:'221', m:392.72, pre:47222.74, lanc:50727.48},
+  {u:'211', label:'211', m:395.01, pre:46524.86, lanc:49977.81},
+  {u:'201', label:'201', m:392.72, pre:45837.30, lanc:49239.23},
+  {u:'191', label:'191', m:395.01, pre:45159.91, lanc:48511.55},
+  {u:'181', label:'181', m:395.01, pre:44492.52, lanc:47794.63},
+  {u:'171', label:'171', m:392.72, pre:44052.00, lanc:47321.42},
+  {u:'161', label:'161', m:392.99, pre:43615.84, lanc:46852.89},
+  {u:'151', label:'151', m:392.72, pre:43184.00, lanc:46389.00},
+  {u:'141', label:'141', m:393.36, pre:42860.12, lanc:46041.08},
+  {u:'131', label:'131', m:392.72, pre:42538.67, lanc:45695.77},
+  {u:'121', label:'121', m:392.57, pre:42219.63, lanc:45353.06},
+  {u:'111', label:'111', m:395.01, pre:41902.98, lanc:45012.91},
+  {u:'101', label:'101', m:394.93, pre:41588.71, lanc:44675.31},
+  {u:'91',  label:'91',  m:394.26, pre:41276.79, lanc:44228.56},
+  {u:'81',  label:'81',  m:395.05, pre:40967.22, lanc:43454.56},
+  {u:'72',  label:'72 (Duplex)', m:558.07, pre:35586.66, lanc:36685.54},
+  {u:'71',  label:'71',  m:389.14, pre:40659.96, lanc:42694.10},
+  {u:'62',  label:'62',  m:326.59, pre:40355.01, lanc:41946.96},
+  {u:'61',  label:'61',  m:391.98, pre:40355.01, lanc:41946.96},
+  {u:'52',  label:'52',  m:331.76, pre:40052.35, lanc:41212.89},
+  {u:'51',  label:'51',  m:388.63, pre:40052.35, lanc:41212.89},
+  {u:'42',  label:'42',  m:326.75, pre:39751.96, lanc:40491.66},
+  {u:'41',  label:'41',  m:393.45, pre:39751.96, lanc:40491.66},
+  {u:'32',  label:'32',  m:332.65, pre:39453.82, lanc:39783.06},
+  {u:'31',  label:'31',  m:390.10, pre:39453.82, lanc:39783.06},
+  {u:'22',  label:'22 (Garden)', m:342.95, pre:33897.30, lanc:35593.12},
+  {u:'21',  label:'21 (Garden)', m:475.87, pre:33897.30, lanc:35593.12},
+];
+
+// ═══════════════════════════════════════════════════════════════════
+//  CONFIG DOS PROJETOS — motor único, cada Quaddra é só dados aqui
+// ═══════════════════════════════════════════════════════════════════
+const PROJECTS = {
+  lorena: {
+    key: 'lorena',
+    nome: 'Quaddra Lorena',
+    corPrimaria: '#5B2A21',
+    corPrimariaEscura: '#3E1C16',
+    corAcento: '#C9A184',
+    identidadeLabel: 'Vinho',
+    metaTorres: '3 torres',
+    metaEntrega: 'Entrega 08/2028',
+    googleScriptUrl: "https://script.google.com/macros/s/AKfycbwvtfIsqxuzVtNuCr0_9Otx-E29GGj5i_-qTwr9gpajhWHCS6Ja4WmNLacdGD6bU7Q18w/exec",
+    torres: ['Parque', 'Europa', 'Jardins'],
+    exportPrefix: 'Quaddra_Lorena',
+    buildUnits: buildTorresLorenaTree,
+    pricingTable: null,
+    simulador: {
+      labelEntrada: 'Ato',
+      temJanela: true,
+      labelMensais: 'Mensais (22x)',
+      labelAnuais: 'Anuais (2x)',
+      milestones: [
+        { label: 'Chave (30/08/2028)', tabLabel: 'Chave', desc: 'Chave (parcela única)', dateMode:'fixed', data: new Date(2028,7,30), defaultPct:10 },
+        { label: 'Financiamento (30/10/2028)', tabLabel: 'Financiamento', desc: 'Financiamento bancário', dateMode:'fixed', data: new Date(2028,9,30), defaultPct:60 }
+      ],
+      defaultPcts: { entrada:5, janela:5, mensais:10, anuais:10 },
+      numAnuais: 2, mensalInicio: 3, mergeAnualComMensal: false,
+      numMensaisDefault: 22, primeiroReforcoDefault: 5, intervaloReforcoDefault: 12,
+      tabPrimeiroReforcoDefault: 5, tabIntervaloReforcoDefault: 12,
+      valorTotalDefault: 13500000, valorM2Default: 34800, metragemDefault: '388,00',
+      dataEntregaCustomDefault: '2028-08-30',
+      tabelaTermos: {
+        pre:  { entrada:5, janela:5, mensais:10, anuais:10, milestone0:10, milestone1:60 },
+        lanc: { entrada:5, janela:5, mensais:10, anuais:10, milestone0:10, milestone1:60 }
+      },
+      flowLabel: 'Fluxo Padrão (Ato · 30/60 · 22 Mensais · 2 Anuais · Chave · Financiamento)',
+      estruturaHint: 'Preenchido com o plano oficial que a incorporadora oferece — ajuste livremente para a negociação de cada cliente. Chave e Financiamento têm data de entrega travada (ver Cronograma).',
+      termosNotaExtra: ' Hoje o Quaddra Lorena só tem uma tabela oficial (não há pré-lançamento distinto) — os dois blocos abaixo vêm iguais; ajuste "Pré-lançamento" separadamente se um dia existir uma condição diferente.',
+      cronogramaHint: (m0, m1) => `A 1ª mensal só entra após a janela de 30/60 dias (mês 3). Chave e Financiamento caem em datas travadas, independente da data do ato: <strong>Chave 30/08/2028</strong> · <strong>Financiamento 30/10/2028</strong> (mês ${m0??'—'} e ${m1??'—'} a partir do ato).`,
+      reforcoExtraDisponivel: false, reforcoExtraDefaultOn: false, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
+      customRowsDefault: [
+        {tipo:'ato', qtd:1, valor:1350000, offsetMeses:0},
+        {tipo:'mensais', qtd:22, valor:61364, offsetMeses:1},
+        {tipo:'anuais', qtd:2, valor:675000, offsetMeses:2},
+        {tipo:'chave', qtd:1, valor:9450000, offsetMeses:null}
+      ]
+    }
+  },
+  jesuino: {
+    key: 'jesuino',
+    nome: 'Quaddra Jesuíno',
+    corPrimaria: '#13291F',
+    corPrimariaEscura: '#0A1913',
+    corAcento: '#C9A184',
+    identidadeLabel: 'Verde',
+    metaTorres: 'Entrega editável',
+    metaEntrega: 'Previsão 06/2030',
+    googleScriptUrl: "https://script.google.com/macros/s/AKfycbzYtg8Mwk-gZl31--ZKCcg3HyijAJzd8REFsGB34ffX3LcGV2ZRS0vCTROqIvYTD9tK/exec",
+    torres: null,
+    exportPrefix: 'Quaddra_Jesuino',
+    buildUnits: buildJesuinoTree,
+    pricingTable: JESUINO_PRICING,
+    simulador: {
+      labelEntrada: 'Sinal (ato)',
+      temJanela: false,
+      labelMensais: 'Mensais (47x)',
+      labelAnuais: 'Anuais (4x)',
+      milestones: [
+        { label: 'Chaves / Repasse', tabLabel: 'Chaves', desc: 'Chaves / Repasse', dateMode:'relative', mesesAposUltimaMensal:1, defaultPct:0 }
+      ],
+      defaultPcts: { entrada:35, janela:0, mensais:0, anuais:50 },
+      numAnuais: 4, mensalInicio: 1, mergeAnualComMensal: true,
+      numMensaisDefault: 47, primeiroReforcoDefault: 4, intervaloReforcoDefault: 12,
+      tabPrimeiroReforcoDefault: 4, tabIntervaloReforcoDefault: 12,
+      valorTotalDefault: 1600000, valorM2Default: 4200, metragemDefault: '389,05',
+      dataEntregaCustomDefault: '2030-06-30',
+      tabelaTermos: {
+        pre:  { entrada:5, janela:0, mensais:15, anuais:10, milestone0:70, milestone1:0 },
+        lanc: { entrada:10, janela:0, mensais:15, anuais:15, milestone0:60, milestone1:0 }
+      },
+      flowLabel: 'Fluxo Padrão (Sinal · 47 Mensais · 4 Anuais · Chaves)',
+      estruturaHint: 'Preenchido com o plano oficial que a incorporadora oferece — ajuste livremente para a negociação de cada cliente.',
+      termosNotaExtra: '',
+      cronogramaHint: (mChaves) => `Chaves cai automaticamente 1 mês após a última mensal (mês ${mChaves??48}).`,
+      reforcoExtraDisponivel: true, reforcoExtraDefaultOn: true, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
+      customRowsDefault: [
+        {tipo:'ato', qtd:1, valor:160000, offsetMeses:0},
+        {tipo:'mensais', qtd:47, valor:15000, offsetMeses:1},
+        {tipo:'anuais', qtd:4, valor:80000, offsetMeses:4},
+        {tipo:'chave', qtd:1, valor:960000, offsetMeses:null}
+      ]
+    }
+  }
+};
+
+var PROJETO_ATIVO = null;
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOGIN — validado contra a aba "Usuarios" na planilha do Lorena
+//  (centralizado: o mesmo cadastro libera os dois projetos).
+//  Para usar a planilha do Jesuíno como base do login, troque a linha
+//  abaixo para: PROJECTS.jesuino.googleScriptUrl
+// ═══════════════════════════════════════════════════════════════════
+const LOGIN_SCRIPT_URL = PROJECTS.lorena.googleScriptUrl;
+const LOGIN_STORAGE_KEY = 'quaddra_auth_usuario';
+
+async function tentarLogin() {
+  const usuario = document.getElementById('loginUsuario').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const erroEl = document.getElementById('loginErro');
+  const btn = document.getElementById('loginBtn');
+  erroEl.style.display = 'none';
+
+  if (!usuario || !senha) {
+    erroEl.textContent = 'Preencha usuário e senha.';
+    erroEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  try {
+    const resp = await fetch(LOGIN_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS no Apps Script
+      body: JSON.stringify({ action: 'login', usuario, senha })
+    });
+    const data = await resp.json();
+    if (data && data.ok) {
+      localStorage.setItem(LOGIN_STORAGE_KEY, usuario);
+      liberarAcessoPosLogin();
+    } else {
+      erroEl.textContent = 'Usuário ou senha incorretos.';
+      erroEl.style.display = 'block';
+    }
+  } catch (e) {
+    console.error(e);
+    erroEl.textContent = 'Não foi possível validar o login agora. Verifique sua internet e tente de novo.';
+    erroEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+}
+
+function liberarAcessoPosLogin() {
+  document.getElementById('tela-login').classList.add('oculta');
+  document.getElementById('tela-selecao').classList.remove('oculta');
+}
+
+function fazerLogout() {
+  localStorage.removeItem(LOGIN_STORAGE_KEY);
+  document.getElementById('tela-app').classList.remove('ativo');
+  document.getElementById('tela-selecao').classList.add('oculta');
+  document.getElementById('tela-login').classList.remove('oculta');
+  document.getElementById('loginUsuario').value = '';
+  document.getElementById('loginSenha').value = '';
+  document.getElementById('loginErro').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TELA DE SELEÇÃO
+// ═══════════════════════════════════════════════════════════════════
+function montarCardsSelecao() {
+  const wrap = document.getElementById('cardsProjetos');
+  wrap.innerHTML = Object.values(PROJECTS).map(p => `
+    <div class="card-projeto" onclick="selecionarProjeto('${p.key}')">
+      <div class="capa" style="background:${p.corPrimaria}; color:${p.corAcento}">
+        <div class="wordmark">QUADDRA<span class="sub">${p.nome.replace('Quaddra ','').toUpperCase()}</span></div>
+      </div>
+      <div class="info">
+        <span class="tag">Identidade · ${p.identidadeLabel}</span>
+        <h3>${p.nome}</h3>
+        <div class="meta-row"><span>${p.metaTorres}</span><b>${p.metaEntrega}</b></div>
+        <div class="entrar" style="color:${p.corPrimaria}"><i class="ti ti-arrow-right"></i> Abrir backoffice</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selecionarProjeto(key) {
+  PROJETO_ATIVO = PROJECTS[key];
+  document.documentElement.style.setProperty('--proj-primaria', PROJETO_ATIVO.corPrimaria);
+  document.documentElement.style.setProperty('--proj-primaria-escura', PROJETO_ATIVO.corPrimariaEscura);
+  document.documentElement.style.setProperty('--proj-acento', PROJETO_ATIVO.corAcento);
+  document.getElementById('appHeaderTitulo').textContent = PROJETO_ATIVO.nome;
+  document.getElementById('projTitle').textContent = PROJETO_ATIVO.nome + ' — Proposta de Pagamento';
+  document.title = PROJETO_ATIVO.nome + ' · Backoffice Diretoria';
+
+  document.getElementById('tela-selecao').classList.add('oculta');
+  document.getElementById('tela-app').classList.add('ativo');
+
+  montarTorreSwitch();
+  resetEstadoEspelho();
+  renderLegenda();
+  units = PROJETO_ATIVO.buildUnits();
+  renderEspelho();
+  renderKPIs();
+  window.montarCamposSimulador(); // monta campos do simulador, LISTA_UNIDADES_SIM, populateUnidadeSelect, refreshUnidadeInfo e render()
+  carregarDados();
+}
+
+function voltarSelecao() {
+  document.getElementById('tela-app').classList.remove('ativo');
+  document.getElementById('tela-selecao').classList.remove('oculta');
+  document.title = 'Quaddra · Backoffice Diretoria';
+}
+
+function resetEstadoEspelho(){
+  torreAtiva = 'Todas';
+  selectedUnitId = null;
+  filtroStatusAtivo = null;
+  clientesOcultos = false;
+  esconderUnidades = false;
+  const search = document.getElementById('searchInput');
+  if (search) search.value = '';
+}
+
+function montarTorreSwitch(){
+  const wrap = document.getElementById('torreSwitch');
+  const torres = PROJETO_ATIVO.torres;
+  if (!torres || torres.length < 2) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<button class="btn btn-gold btn-sm" data-torre="Todas" onclick="selecionarTorre('Todas')"><i class="ti ti-layout-grid"></i> Todas as Torres</button>` +
+    torres.map(t => `<button class="btn btn-sec btn-sm" data-torre="${t}" onclick="selecionarTorre('${t}')">Torre ${t}</button>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CONSTANTES COMPARTILHADAS
+// ═══════════════════════════════════════════════════════════════════
+const STATUS_CONFIG = {
+  DISPONIVEL:       { label: "Disponível",        color: "#9CA3AF" },
+  PROPOSTA:         { label: "Proposta",           color: "#4ADE80" },
+  PROCESSO:         { label: "Em Processo",        color: "#22C55E" },
+  RESERVA_VENDA:    { label: "Reserva Venda",      color: "#F59E0B" },
+  CONTRATO_ENVIADO: { label: "Contrato Enviado",   color: "#3B82F6" },
+  CV_ASSINADO:      { label: "CV Assinado",        color: "#15803D" },
+  SUSPENSA:         { label: "Suspensa",           color: "#6B7280" }
+};
+const GRUPOS_STATUS = { PROCESSO: ["PROCESSO", "CONTRATO_ENVIADO"] };
+function statusNoGrupo(status, grupoKey) {
+  const grupo = GRUPOS_STATUS[grupoKey];
+  return grupo ? grupo.includes(status) : status === grupoKey;
+}
+const FASES = [
+  "Proposta em Análise", "Aprovada Comercial / Diretoria", "Análise de Crédito / Compliance",
+  "Confecção de Contrato / Jurídico", "Em Assinatura (Coleta)", "Contrato Assinado & Ativo"
+];
+
+// ═══════════════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════════════
+var units = [];
+var selectedUnitId = null;
+var clientesOcultos = false;
+var esconderUnidades = false;
+var torreAtiva = 'Todas';
+var filtroStatusAtivo = null;
+var LISTA_UNIDADES_SIM = [];
+
+// ═══════════════════════════════════════════════════════════════════
+//  TRATAMENTO DE DATA / FORMATAÇÃO / TOAST / NAVEGAÇÃO
+// ═══════════════════════════════════════════════════════════════════
+function tratarFormatoData(dataS) {
+  if (!dataS) return "";
+  let s = String(dataS).trim();
+  if (s.length > 15 && (s.includes("GMT") || /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(s))) {
+    try {
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return String(d.getMonth() + 1).padStart(2, '0') + "/" + d.getFullYear();
+    } catch(e) {}
+  }
+  if (s.includes("T")) s = s.split("T")[0];
+  if (s.includes("-")) {
+    const p = s.split("-");
+    if (p[0].length === 4) return p[1] + "/" + p[0];
+  }
+  return s;
+}
+// Igual à tratarFormatoData, mas preserva o dia (usada para data_vencimento_dia,
+// que às vezes chega "crua" da planilha — ex: toString() de uma data do Apps Script).
+function tratarFormatoDia(dataS) {
+  if (!dataS) return "";
+  let s = String(dataS).trim();
+  if (s.length > 15 && (s.includes("GMT") || /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(s))) {
+    try {
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        return String(d.getDate()).padStart(2, '0') + "/" + String(d.getMonth() + 1).padStart(2, '0') + "/" + d.getFullYear();
+      }
+    } catch(e) {}
+  }
+  if (s.includes("T")) s = s.split("T")[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const p = s.split("-");
+    return p[2] + "/" + p[1] + "/" + p[0];
+  }
+  return s;
+}
+function fmtBRL(v) { return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }); }
+function fmtNum(v) { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+
+function showToast(msg, type = 'info', duration = 3500) {
+  const container = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  const icons = { success: 'ti-check', error: 'ti-x', info: 'ti-info-circle' };
+  t.className = `toast ${type}`;
+  t.innerHTML = `<i class="ti ${icons[type] || 'ti-info-circle'}"></i> ${msg}`;
+  container.appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, duration);
+}
+
+function switchTab(tabName, event) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  if (tabName === 'financeiro') renderFinanceiro();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  BUSCA E FILTRO NO ESPELHO
+// ═══════════════════════════════════════════════════════════════════
+function filtrarPorStatus(statusKey) {
+  if (filtroStatusAtivo === statusKey) { filtroStatusAtivo = null; }
+  else {
+    filtroStatusAtivo = statusKey;
+    document.getElementById('searchInput').value = '';
+    selectedUnitId = null;
+  }
+  document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('kpi-active'));
+  if (filtroStatusAtivo) {
+    const card = document.getElementById('kpiCard-' + filtroStatusAtivo);
+    if (card) card.classList.add('kpi-active');
+  }
+  aplicarFiltros();
+  renderRelatorioFiltro();
+}
+function filtrarEspelho(q) {
+  if (q.trim()) { filtroStatusAtivo = null; document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('kpi-active')); }
+  aplicarFiltros();
+  if (!filtroStatusAtivo) renderRelatorioFiltro();
+}
+function aplicarFiltros() {
+  const q        = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  const stFiltro = filtroStatusAtivo;
+  document.querySelectorAll('.unit-box').forEach(box => {
+    if (box.style.opacity === '0') return;
+    let visivel = true;
+    if (stFiltro) visivel = statusNoGrupo(box.dataset.status, stFiltro);
+    else if (q) visivel = (box.dataset.id || '').includes(q) || (box.dataset.cliente || '').includes(q);
+    box.classList.toggle('hidden-search', !visivel);
+  });
+}
+
+function unidadeTituloCurto(u){
+  return u.torre ? `Ap ${u.numero_unidade} — Torre ${u.torre}` : `Ap ${u.id_unidade}`;
+}
+function unidadeSubtitulo(u){
+  const tagEspecial = u.especial ? ` · ${u.especial}` : (u.tipo && u.tipo !== 'Tipo' ? ` · ${u.tipo}` : '');
+  return u.torre ? `Torre ${u.torre} · ${u.tipo}${u.especial?(' · '+u.especial):''} · ${u.metragem}m²` : `${u.tipo} · ${u.metragem}m²`;
+}
+
+function renderRelatorioFiltro() {
+  const panel = document.getElementById('painelDireto');
+  if (!filtroStatusAtivo) {
+    if (!selectedUnitId) {
+      panel.innerHTML = `<div class="painel-vazio"><i class="ti ti-building-store"></i><p>Selecione uma unidade no espelho<br>para editar status, esteira e fluxo financeiro.</p></div>`;
+    }
+    return;
+  }
+  const cfg = STATUS_CONFIG[filtroStatusAtivo] || {};
+  const unidades = units.filter(u => statusNoGrupo(u.status_espelho, filtroStatusAtivo));
+  const vgvTotal = unidades.reduce((s, u) => s + u.fluxo_financeiro.reduce((a, f) => a + (parseFloat(f.valor) || 0), 0), 0);
+
+  const linhas = unidades.map(u => {
+    const vgv = u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+    const obs  = (u.observacoes || '').trim();
+    const subStatusCfg = STATUS_CONFIG[u.status_espelho] || {};
+    const subStatus = u.status_espelho !== filtroStatusAtivo
+      ? `<span class="rel-substatus" style="color:${subStatusCfg.color || '#888'}">${subStatusCfg.label || u.status_espelho}</span>` : '';
+    return `
+      <tr class="rel-row" onclick="selectUnit('${u.id_unidade}')" title="Abrir unidade ${u.id_unidade}">
+        <td class="rel-td rel-id">
+          <span class="rel-badge">${unidadeTituloCurto(u)}</span>
+          <span class="rel-tipo">${unidadeSubtitulo(u)}</span>
+          ${subStatus}
+        </td>
+        <td class="rel-td rel-cliente">${maskCliente(u.cliente_nome)}</td>
+        <td class="rel-td rel-vgv">${vgv > 0 ? fmtBRL(vgv) : '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td class="rel-td rel-obs">${obs ? `<span title="${obs}">${obs.length > 50 ? obs.slice(0,48)+'…' : obs}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
+      </tr>`;
+  }).join('');
+  const empty = unidades.length === 0
+    ? `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.85rem;">Nenhuma unidade com este status.</td></tr>` : '';
+
+  panel.innerHTML = `
+    <div class="rel-header">
+      <div class="rel-header-top">
+        <span class="rel-status-dot" style="background:${cfg.color || '#888'}"></span>
+        <span class="rel-title">${cfg.label || filtroStatusAtivo}</span>
+        <span class="rel-count">${unidades.length} unidade${unidades.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="rel-vgv-total"><span class="rel-vgv-label">VGV Total</span><span class="rel-vgv-val">${fmtBRL(vgvTotal)}</span></div>
+    </div>
+    <div class="rel-body">
+      <table class="rel-table">
+        <thead><tr><th>Unidade</th><th>Cliente</th><th>VGV</th><th>Obs.</th></tr></thead>
+        <tbody>${linhas}${empty}</tbody>
+      </table>
+    </div>
+    <div class="rel-footer"><i class="ti ti-info-circle" style="font-size:0.85rem;opacity:0.5"></i><span>Clique em uma linha para abrir a unidade</span></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LEGENDA / ESPELHO / KPIs
+// ═══════════════════════════════════════════════════════════════════
+function renderLegenda() {
+  const el = document.getElementById('legenda-status');
+  el.innerHTML = Object.entries(STATUS_CONFIG).map(([k, v]) =>
+    `<div class="legenda-item"><div class="legenda-dot" style="background:${v.color};"></div>${v.label}</div>`
+  ).join('');
+}
+function getStatusColor(st) { return (STATUS_CONFIG[st] || STATUS_CONFIG['DISPONIVEL']).color; }
+
+function selecionarTorre(nome) {
+  torreAtiva = nome;
+  document.querySelectorAll('#torreSwitch button').forEach(b => {
+    const ativo = b.dataset.torre === nome;
+    b.classList.toggle('btn-gold', ativo);
+    b.classList.toggle('btn-sec', !ativo);
+  });
+  selectedUnitId = null;
+  filtroStatusAtivo = null;
+  document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('kpi-active'));
+  const search = document.getElementById('searchInput');
+  if (search) search.value = '';
+  renderEspelho();
+  renderKPIs(); // atualiza também o resumo lateral (Resumo — Torre X), que depende da torre ativa
+  renderRelatorioFiltro();
+}
+
+function renderPredioGrid(container, unidadesTorre) {
+  const andares = [...new Set(unidadesTorre.map(u => u.andar))].sort((a, b) => a - b);
+  andares.forEach(andar => {
+    const row = document.createElement("div");
+    row.className = "andar-row";
+    const lbl = document.createElement("div");
+    lbl.className = "label-andar";
+    lbl.textContent = `${andar}º`;
+    row.appendChild(lbl);
+    const u1 = unidadesTorre.find(u => u.andar === andar && u.final === 1);
+    const u2 = unidadesTorre.find(u => u.andar === andar && u.final === 2);
+    row.appendChild(createUnitDom(u1));
+    row.appendChild(createUnitDom(u2));
+    container.appendChild(row);
+  });
+}
+
+function renderEspelho() {
+  const container = document.getElementById("predioContainer");
+  container.innerHTML = "";
+  const torres = PROJETO_ATIVO.torres;
+
+  if (torres && torres.length > 1) {
+    if (torreAtiva === 'Todas') {
+      container.className = 'grid-multi-torre';
+      torres.forEach(torre => {
+        const bloco = document.createElement('div');
+        bloco.className = 'torre-bloco';
+        const titulo = document.createElement('div');
+        titulo.className = 'torre-bloco-titulo';
+        titulo.textContent = 'Torre ' + torre;
+        bloco.appendChild(titulo);
+        const grid = document.createElement('div');
+        grid.className = 'grid-predio grid-predio-compact';
+        bloco.appendChild(grid);
+        renderPredioGrid(grid, units.filter(u => u.torre === torre));
+        container.appendChild(bloco);
+      });
+    } else {
+      container.className = '';
+      const grid = document.createElement('div');
+      grid.className = 'grid-predio';
+      container.appendChild(grid);
+      renderPredioGrid(grid, units.filter(u => u.torre === torreAtiva));
+    }
+  } else {
+    container.className = '';
+    const grid = document.createElement('div');
+    grid.className = 'grid-predio';
+    container.appendChild(grid);
+    renderPredioGrid(grid, units);
+  }
+  aplicarFiltros();
+}
+
+function createUnitDom(u) {
+  const box = document.createElement("div");
+  if (!u) { box.className = "unit-box"; box.style.cssText = "opacity:0; pointer-events:none;"; return box; }
+  const stKey = u.status_espelho.toLowerCase();
+  const isSelected = String(u.id_unidade) === String(selectedUnitId);
+  box.className = `unit-box u-${stKey}${isSelected ? ' selected' : ''}`;
+  box.dataset.id     = String(u.id_unidade).toLowerCase();
+  box.dataset.cliente = (u.cliente_nome || '').toLowerCase();
+  box.dataset.status  = u.status_espelho;
+  box.onclick = () => selectUnit(u.id_unidade);
+  const fase = u.fase_esteira || 1;
+  const mostrarFase = u.status_espelho !== "DISPONIVEL" && u.status_espelho !== "SUSPENSA";
+  const metragemArredondada = Math.round(u.metragem);
+  const tagLabel = u.especial ? ` · ${u.especial}` : (u.tipo && u.tipo !== 'Tipo' ? ` · ${u.tipo}` : '');
+  box.innerHTML = `
+    <div class="unit-name">${u.torre ? 'Ap '+u.numero_unidade : 'Ap '+u.id_unidade}</div>
+    <div class="unit-meta">
+      <span>${metragemArredondada}m²${tagLabel}</span>
+      ${mostrarFase ? `<span class="unit-fase-badge">F${fase}</span>` : ''}
+    </div>
+    <div class="unit-status-label">${(STATUS_CONFIG[u.status_espelho] || {}).label || u.status_espelho}</div>
+  `;
+  return box;
+}
+
+function renderKPIs() {
+  let vgvAss = 0, vgvProc = 0, vgvRes = 0, vgvProp = 0;
+  let cAss = 0, cProc = 0, cRes = 0, cProp = 0, cSusp = 0, cDisp = 0;
+  units.forEach(u => {
+    const total = u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+    switch (u.status_espelho) {
+      case "CV_ASSINADO":       vgvAss  += total; cAss++;  break;
+      case "PROCESSO":
+      case "CONTRATO_ENVIADO":  vgvProc += total; cProc++; break;
+      case "RESERVA_VENDA":     vgvRes  += total; cRes++;  break;
+      case "PROPOSTA":          vgvProp += total; cProp++; break;
+      case "SUSPENSA":          cSusp++;                   break;
+      default:                  cDisp++;
+    }
+  });
+  document.getElementById("kpiVgvAssinado").textContent = fmtBRL(vgvAss);
+  document.getElementById("kpiVgvProcesso").textContent = fmtBRL(vgvProc);
+  document.getElementById("kpiVgvReserva").textContent  = fmtBRL(vgvRes);
+  document.getElementById("kpiVgvProposta").textContent = fmtBRL(vgvProp);
+  document.getElementById("kpiDisponivel").textContent  = `${cDisp} un`;
+  document.getElementById("countAssinado").textContent = `${cAss} un`;
+  document.getElementById("countProcesso").textContent = `${cProc} un`;
+  document.getElementById("countReserva").textContent  = `${cRes} un`;
+  document.getElementById("countProposta").textContent = `${cProp} un`;
+  document.getElementById("countSuspensa").textContent = `${cSusp} un suspensas`;
+  renderResumoEspelho();
+}
+
+function renderResumoEspelho() {
+  const el = document.getElementById('resumoEspelho');
+  if (!el) return;
+  const ordem = ["DISPONIVEL","PROPOSTA","PROCESSO","RESERVA_VENDA","CONTRATO_ENVIADO","CV_ASSINADO","SUSPENSA"];
+  const dados = Object.fromEntries(ordem.map(k => [k, { qtd: 0, vgv: 0 }]));
+  const temTorres = PROJETO_ATIVO.torres && PROJETO_ATIVO.torres.length > 1;
+  const unidadesTorre = (temTorres && torreAtiva !== 'Todas') ? units.filter(u => u.torre === torreAtiva) : units;
+  unidadesTorre.forEach(u => {
+    if (!dados[u.status_espelho]) return;
+    dados[u.status_espelho].qtd++;
+    dados[u.status_espelho].vgv += u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+  });
+  const totalQtd = unidadesTorre.length;
+  const totalVgv = Object.values(dados).reduce((s, d) => s + d.vgv, 0);
+  const fmtCompact = v => v >= 1000000 ? `${(v/1000000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`;
+  const linhas = ordem.map(k => {
+    const cfg = STATUS_CONFIG[k];
+    const d = dados[k];
+    const pct = totalQtd ? Math.round((d.qtd / totalQtd) * 100) : 0;
+    return `<div class="resumo-row">
+        <div class="resumo-label"><div class="resumo-dot" style="background:${cfg.color};"></div>${cfg.label}</div>
+        <div class="resumo-qtd">${d.qtd}</div><div class="resumo-pct">${pct}%</div><div class="resumo-vgv">${fmtCompact(d.vgv)}</div>
+      </div>`;
+  }).join('');
+  const titulo = temTorres ? (torreAtiva === 'Todas' ? 'Resumo — Projeto Completo' : 'Resumo — Torre ' + torreAtiva) : 'Resumo do Empreendimento';
+  el.innerHTML = `
+    <div class="resumo-titulo">${titulo}</div>
+    <div class="resumo-row resumo-row-head"><span>Status</span><span>Qtd</span><span>%</span><span>VGV</span></div>
+    ${linhas}
+    <div class="resumo-total-row"><span>Total</span><span>${totalQtd}</span><span>100%</span><span>${fmtCompact(totalVgv)}</span></div>`;
+}
+
+function maskCliente(nome) {
+  if (!clientesOcultos) return nome || '<span style="color:var(--text-muted);font-style:italic">S/N</span>';
+  if (!nome) return '<span class="cliente-mask">••••••</span>';
+  const partes = nome.trim().split(' ');
+  return `<span class="cliente-mask">${partes[0][0] || '•'}••••• ${partes.length > 1 ? partes[partes.length-1][0]+'.' : ''}</span>`;
+}
+function toggleClientesOcultos() {
+  clientesOcultos = !clientesOcultos;
+  document.querySelectorAll('.btn-ocultar-cli').forEach(btn => {
+    btn.classList.toggle('ativo', clientesOcultos);
+    btn.innerHTML = clientesOcultos ? '<i class="ti ti-eye"></i> Mostrar Clientes' : '<i class="ti ti-eye-off"></i> Ocultar Clientes';
+  });
+  renderRelatorioFiltro();
+  renderFinanceiro();
+  if (selectedUnitId) renderGaveta(selectedUnitId);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SELEÇÃO E GAVETA DA UNIDADE
+// ═══════════════════════════════════════════════════════════════════
+function selectUnit(id) {
+  selectedUnitId = id;
+  filtroStatusAtivo = null;
+  document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('kpi-active'));
+  aplicarFiltros();
+  renderEspelho();
+  renderGaveta(id);
+}
+
+function renderGaveta(id) {
+  const u = units.find(x => String(x.id_unidade) === String(id));
+  if (!u) return;
+  const panel = document.getElementById("painelDireto");
+  const totalAtual = u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+  const subInfo = u.torre ? `${u.tipo} · ${u.metragem}m² · ${u.vagas||'—'} vagas · ` : `${u.tipo} · ${u.metragem}m² · `;
+
+  panel.innerHTML = `
+    <div class="editor-header">
+      <div>
+        <h2>${unidadeTituloCurto(u)}</h2>
+        <p>${subInfo}${(STATUS_CONFIG[u.status_espelho] || {}).label || u.status_espelho}</p>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem">VGV Total</div>
+        <div style="font-size:1.1rem; font-weight:600; color:var(--bege-dk)">${fmtBRL(totalAtual)}</div>
+      </div>
+    </div>
+    <div class="editor-body">
+      <div class="form-group">
+        <label>Status no Espelho</label>
+        <select id="editStatus" onchange="window.updateStatusLocal(this.value)">
+          <option value="DISPONIVEL"       ${u.status_espelho==="DISPONIVEL"       ?"selected":""}>Disponível</option>
+          <option value="PROPOSTA"         ${u.status_espelho==="PROPOSTA"         ?"selected":""}>Proposta em Análise</option>
+          <option value="PROCESSO"         ${u.status_espelho==="PROCESSO"         ?"selected":""}>Em Processo Comercial</option>
+          <option value="RESERVA_VENDA"    ${u.status_espelho==="RESERVA_VENDA"    ?"selected":""}>Reserva Venda</option>
+          <option value="CONTRATO_ENVIADO" ${u.status_espelho==="CONTRATO_ENVIADO" ?"selected":""}>Contrato Enviado</option>
+          <option value="CV_ASSINADO"      ${u.status_espelho==="CV_ASSINADO"      ?"selected":""}>CV Assinado</option>
+          <option value="SUSPENSA"         ${u.status_espelho==="SUSPENSA"         ?"selected":""}>Suspensa / Bloqueada</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nome do Cliente</label>
+        <input type="text" id="editCliente" value="${u.cliente_nome || ''}" placeholder="Nome do proponente" onchange="window.updateClienteLocal(this.value)">
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="editObservacoes" placeholder="Anotações estratégicas sobre a negociação..." onchange="window.updateObservacoesLocal(this.value)">${u.observacoes || ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Esteira de Backoffice Interno (${u.fase_esteira}/6)</label>
+        <div class="esteira-wrap">
+          ${FASES.map((f, i) => {
+            const n = i + 1;
+            const isActive = u.fase_esteira === n;
+            const isDone   = u.fase_esteira > n;
+            const numHTML  = isDone ? `<i class="ti ti-check" style="font-size:0.75rem"></i>` : n;
+            return `<button class="step-btn-v${isActive?' active':''}${isDone?' done':''}" onclick="window.setFaseLocal(${n})">
+              <span class="step-num">${numHTML}</span><span>${n}. ${f}</span></button>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem">
+          <label style="margin:0">Fluxo Financeiro da Unidade</label>
+          <button class="btn btn-sec btn-sm" onclick="window.addLinhaFluxo()"><i class="ti ti-plus"></i> Parcela</button>
+        </div>
+        <table class="fin-table">
+          <thead><tr><th>Mês/Ano</th><th>Condição</th><th style="text-align:right">Valor (R$)</th><th style="text-align:right">%</th><th></th></tr></thead>
+          <tbody>
+            ${u.fluxo_financeiro.map((f, i) => {
+              const pct = totalAtual > 0 ? ((parseFloat(f.valor) / totalAtual) * 100).toFixed(1) : '0.0';
+              return `<tr>
+                <td><input type="text"   value="${f.data_vencimento || ''}" placeholder="MM/AAAA" onchange="window.updateFluxoRow(${i},'data_vencimento',this.value)"></td>
+                <td><input type="text"   value="${f.descricao || ''}"       placeholder="Ato, Anual..." onchange="window.updateFluxoRow(${i},'descricao',this.value)"></td>
+                <td><input type="number" value="${f.valor || 0}"            step="0.01" style="text-align:right" onchange="window.updateFluxoRow(${i},'valor',this.value)"></td>
+                <td style="font-size:0.75rem; font-weight:600; color:var(--bege-dk); text-align:right; padding-right:0.5rem;">${pct}%</td>
+                <td><button class="btn btn-danger" onclick="window.deleteFluxoRow(${i})"><i class="ti ti-trash"></i></button></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <div class="fin-total-row"><span class="fin-total-label">Total Previsto</span><span class="fin-total-val" id="fin-total-val">${fmtBRL(totalAtual)}</span></div>
+      </div>
+    </div>
+    <div class="editor-footer">
+      <button class="btn btn-sec" onclick="carregarDados()">Cancelar</button>
+      <button class="btn btn-gold" id="btnSalvar" onclick="window.salvarUnidadeData('${u.id_unidade}')"><i class="ti ti-device-floppy"></i> Salvar na Planilha</button>
+    </div>`;
+}
+
+window.updateStatusLocal = function(val) {
+  const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
+  if (!u) return;
+  u.status_espelho = val;
+  if (val === "PROCESSO")          u.fase_esteira = Math.max(u.fase_esteira, 2);
+  if (val === "RESERVA_VENDA")     u.fase_esteira = Math.max(u.fase_esteira, 3);
+  if (val === "CONTRATO_ENVIADO")  u.fase_esteira = Math.max(u.fase_esteira, 4);
+  if (val === "CV_ASSINADO")       u.fase_esteira = Math.max(u.fase_esteira, 5);
+  renderKPIs(); renderEspelho(); renderGaveta(selectedUnitId);
+};
+window.updateClienteLocal = function(val) {
+  const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
+  if (u) { u.cliente_nome = val; renderEspelho(); }
+};
+window.updateObservacoesLocal = function(val) {
+  const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
+  if (u) u.observacoes = val;
+};
+window.setFaseLocal = function(fase) {
+  const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
+  if (u) { u.fase_esteira = fase; renderGaveta(selectedUnitId); renderEspelho(); }
+};
+window.updateFluxoRow = function(index, field, value) {
+  const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
+  if (!u) return;
+  u.fluxo_financeiro[index][field] = value;
+  renderKPIs();
+  if (field === 'valor') {
+    const total = u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+    const el = document.getElementById('fin-total-val');
+    if (el) el.textContent = fmtBRL(total);
+  }
+};
+window.addLinhaFluxo = function() {
+  const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
+  if (!u) return;
+  const now = new Date();
+  const mes = String(now.getMonth() + 1).padStart(2, '0');
+  u.fluxo_financeiro.push({ data_vencimento: `${mes}/${now.getFullYear()}`, descricao: "", valor: 0 });
+  renderGaveta(selectedUnitId);
+};
+window.deleteFluxoRow = function(index) {
+  const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
+  if (!u) return;
+  u.fluxo_financeiro.splice(index, 1);
+  renderGaveta(selectedUnitId); renderKPIs();
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  SALVAR / CARREGAR — GOOGLE SHEETS (URL conforme projeto ativo)
+// ═══════════════════════════════════════════════════════════════════
+window.salvarUnidadeData = async function(id) {
+  const url = PROJETO_ATIVO.googleScriptUrl;
+  if (!url) { showToast('Modo local: a alteração já está aplicada nesta sessão. Conecte uma planilha para persistir entre sessões.', 'info', 4500); return; }
+  const btn = document.getElementById("btnSalvar");
+  if (btn) { btn.disabled = true; btn.innerHTML = `<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Enviando...`; }
+
+  const u = units.find(x => String(x.id_unidade) === String(id));
+  const fluxoFormatado = (u.fluxo_financeiro || []).map(f => ({
+    id_fluxo: "FLX-" + Math.floor(Math.random() * 100000),
+    id_unidade: String(u.id_unidade).trim(),
+    id_torre: u.torre || undefined,
+    data_vencimento: f.data_vencimento, data_vencimento_dia: f.data_vencimento_dia || '',
+    descricao: f.descricao, valor: f.valor, v_total: f.valor
+  }));
+  const payload = {
+    action: "updateUnit", id_unidade: String(u.id_unidade), id_torre: u.torre || undefined,
+    status_espelho: u.status_espelho, cliente_nome: u.cliente_nome, observacoes: u.observacoes || "",
+    fase_esteira: String(u.fase_esteira), fluxo_financeiro: fluxoFormatado
+  };
+  setSyncStatus('loading', 'Enviando dados...');
+  try {
+    await fetch(url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    showToast(`Unidade ${id} enviada com sucesso!`, 'success');
+    setTimeout(() => carregarDados(), 1500);
+  } catch (error) {
+    console.error(error);
+    showToast("Erro ao conectar com a planilha. Verifique a URL.", 'error');
+    setSyncStatus('offline', 'Erro de conexão');
+    if (btn) { btn.disabled = false; btn.innerHTML = `<i class="ti ti-device-floppy"></i> Salvar na Planilha`; }
+  }
+};
+
+function setSyncStatus(state, text) {
+  const dot  = document.getElementById("syncDot");
+  const span = document.getElementById("syncText");
+  dot.className  = "sync-dot" + (state === 'online' ? ' online' : state === 'loading' ? ' loading' : '');
+  span.textContent = text;
+}
+
+async function carregarDados() {
+  const url = PROJETO_ATIVO.googleScriptUrl;
+  setSyncStatus('loading', 'Sincronizando...');
+  if (!url || url.includes("SUA_NOVA_URL")) {
+    units = PROJETO_ATIVO.buildUnits();
+    renderEspelho(); renderKPIs(); window.populateUnidadeSelect();
+    setSyncStatus('offline', 'Modo local (sem URL)');
+    return;
+  }
+  try {
+    const resp   = await fetch(url);
+    const result = await resp.json();
+    const tree   = PROJETO_ATIVO.buildUnits();
+    if (result && result.status === "success" && Array.isArray(result.data)) {
+      result.data.forEach(c => {
+        const u = tree.find(x => String(x.id_unidade) === String(c.id_unidade));
+        if (!u) return;
+        u.status_espelho = c.status_espelho || "DISPONIVEL";
+        u.cliente_nome   = c.cliente_nome   || "";
+        u.observacoes    = c.observacoes    || "";
+        u.fase_esteira   = parseInt(c.fase_esteira) || 1;
+        const fluxoBruto = c.fluxo_financeiro || c.fluxo || [];
+        u.fluxo_financeiro = Array.isArray(fluxoBruto)
+          ? fluxoBruto.map(f => ({
+              data_vencimento: tratarFormatoData(f.data_vencimento || f.mes_ano),
+              data_vencimento_dia: tratarFormatoDia(f.data_vencimento_dia),
+              descricao:       f.descricao || f.condicao || "",
+              valor:           parseFloat(f.valor) || 0
+            })) : [];
+      });
+      setSyncStatus('online', 'Dados atualizados');
+      showToast('Dados sincronizados com a planilha.', 'success', 2500);
+    } else {
+      setSyncStatus('offline', 'Resposta inesperada');
+    }
+    units = tree;
+    renderEspelho(); renderKPIs(); renderFinanceiro();
+    window.populateUnidadeSelect();
+    if (selectedUnitId) renderGaveta(selectedUnitId);
+  } catch (err) {
+    console.error(err);
+    units = PROJETO_ATIVO.buildUnits();
+    renderEspelho(); renderKPIs(); window.populateUnidadeSelect();
+    setSyncStatus('offline', 'Sem conexão — modo local');
+    showToast('Não foi possível conectar à planilha. Rodando em modo local.', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ABA FINANCEIRO
+// ═══════════════════════════════════════════════════════════════════
+function toggleVisibilidadeUnidades() {
+  esconderUnidades = !esconderUnidades;
+  const btn = document.getElementById("btnToggleUnidades");
+  btn.innerHTML = esconderUnidades ? `<i class="ti ti-eye"></i> Mostrar Unidades` : `<i class="ti ti-eye-off"></i> Esconder Unidades`;
+  renderFinanceiro();
+}
+
+function renderFinanceiro() {
+  const chkAss  = document.getElementById("chkAssinado")?.checked;
+  const chkCont = document.getElementById("chkContrato")?.checked;
+  const chkRes  = document.getElementById("chkReserva")?.checked;
+  const chkProc = document.getElementById("chkProcesso")?.checked;
+  const chkProp = document.getElementById("chkProposta")?.checked;
+  if (chkAss === undefined) return;
+  const filtradas = units.filter(u => {
+    if (u.status_espelho === "CV_ASSINADO"       && chkAss)  return true;
+    if (u.status_espelho === "CONTRATO_ENVIADO"  && chkCont) return true;
+    if (u.status_espelho === "RESERVA_VENDA"     && chkRes)  return true;
+    if (u.status_espelho === "PROCESSO"          && chkProc) return true;
+    if (u.status_espelho === "PROPOSTA"          && chkProp) return true;
+    return false;
+  });
+  const mesesSet = new Set();
+  filtradas.forEach(u => u.fluxo_financeiro.forEach(f => { if (f.data_vencimento) mesesSet.add(f.data_vencimento); }));
+  const meses = [...mesesSet].sort((a, b) => {
+    const pa = a.split("/"), pb = b.split("/");
+    if (pa.length === 2 && pb.length === 2) return new Date(pa[1], pa[0]-1) - new Date(pb[1], pb[0]-1);
+    return 0;
+  });
+  const tabela = document.getElementById("tabelaFluxoCompilado");
+  const dispCls = esconderUnidades ? 'class="hide-unit-col"' : '';
+  let headHTML = `<tr><th style="min-width:100px; position:sticky; left:0; background:var(--surface2);">Mês/Ano</th>`;
+  filtradas.forEach(u => {
+    const rotulo = u.torre ? `Ap ${u.numero_unidade} <span style="font-weight:400;color:var(--text-muted)">(${u.torre})</span>` : `Ap ${u.id_unidade}`;
+    headHTML += `<th ${dispCls} style="text-align:right; min-width:120px;">${rotulo}<br><span style="font-weight:400; font-size:0.65rem;">${maskCliente(u.cliente_nome)}</span></th>`;
+  });
+  headHTML += `<th style="text-align:right; color:var(--bege-dk); min-width:120px;">Total Mês</th><th style="text-align:right; color:#22C55E; min-width:120px;">Acumulado</th></tr>`;
+
+  let acum = 0, bodyHTML = "";
+  if (meses.length === 0) {
+    bodyHTML = `<tr><td colspan="100%" style="text-align:center; padding:3rem; color:var(--text-muted);">Nenhum fluxo financeiro para os status selecionados.</td></tr>`;
+  } else {
+    meses.forEach(mes => {
+      let totalMes = 0;
+      const mesId = mes.replace(/\//g, '-');
+      const detalhes = [];
+      let row = `<tr><td style="font-weight:600; color:var(--text); position:sticky; left:0; background:var(--surface); cursor:pointer" onclick="toggleDetalheMesFinanceiro('${mesId}')" title="Clique para ver o dia de cada parcela">` +
+                `<i class="ti ti-chevron-down" id="chevMes-${mesId}" style="font-size:0.68rem; margin-right:0.3rem; color:var(--text-muted);"></i>${mes}</td>`;
+      filtradas.forEach(u => {
+        const doMes = u.fluxo_financeiro.filter(f => f.data_vencimento === mes);
+        const soma = doMes.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+        totalMes += soma;
+        row += soma > 0 ? `<td ${dispCls} style="text-align:right; color:var(--text);">${fmtNum(soma)}</td>`
+                        : `<td ${dispCls} style="text-align:right; color:var(--text-muted); opacity:0.3;">—</td>`;
+        const rotulo = u.torre ? `Ap ${u.numero_unidade} (${u.torre})` : `Ap ${u.id_unidade}`;
+        doMes.forEach(f => detalhes.push({
+          rotulo, cliente: maskCliente(u.cliente_nome), dia: f.data_vencimento_dia || '',
+          descricao: f.descricao || '', valor: parseFloat(f.valor) || 0
+        }));
+      });
+      acum += totalMes;
+      row += `<td style="text-align:right; font-weight:600; color:var(--bege-dk);">${fmtBRL(totalMes)}</td>`;
+      row += `<td style="text-align:right; font-weight:600; color:#22C55E;">${fmtBRL(acum)}</td></tr>`;
+      bodyHTML += row;
+
+      const linhasDetalhe = detalhes.length
+        ? detalhes.map(d => `
+            <div style="display:flex; justify-content:space-between; gap:1rem; padding:0.35rem 0; border-bottom:1px solid var(--border); font-size:0.78rem;">
+              <span style="min-width:160px;"><strong>${d.rotulo}</strong> ${d.cliente ? '· ' + d.cliente : ''}</span>
+              <span style="color:${d.dia ? 'var(--text)' : 'var(--text-muted)'};">${d.dia || 'dia não informado na planilha'}</span>
+              <span style="color:var(--text-muted); flex:1;">${d.descricao}</span>
+              <span style="font-weight:600;">${fmtBRL(d.valor)}</span>
+            </div>`).join('')
+        : `<div style="color:var(--text-muted); font-size:0.78rem; padding:0.35rem 0;">Nenhuma parcela encontrada para este mês.</div>`;
+      bodyHTML += `<tr id="detalheMes-${mesId}" style="display:none;"><td colspan="100%" style="background:var(--surface2); padding:0.75rem 1.25rem;">${linhasDetalhe}</td></tr>`;
+    });
+    let totalRow = `<tr style="border-top:1px solid var(--border2);"><td style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600; position:sticky; left:0; background:var(--surface2);">Total Unidade</td>`;
+    filtradas.forEach(u => {
+      const tot = u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+      totalRow += `<td ${dispCls} style="text-align:right; font-weight:600; color:var(--bege-dk); background:rgba(199,178,153,0.06);">${fmtBRL(tot)}</td>`;
+    });
+    totalRow += `<td style="text-align:right; font-weight:700; color:var(--bege-dk); font-size:0.9rem;">${fmtBRL(acum)}</td><td></td></tr>`;
+    bodyHTML += totalRow;
+  }
+  tabela.querySelector('thead').innerHTML = headHTML;
+  tabela.querySelector('tbody').innerHTML = bodyHTML;
+}
+
+function toggleDetalheMesFinanceiro(mesId) {
+  const row = document.getElementById('detalheMes-' + mesId);
+  const chev = document.getElementById('chevMes-' + mesId);
+  if (!row) return;
+  const aberto = row.style.display !== 'none';
+  row.style.display = aberto ? 'none' : 'table-row';
+  if (chev) chev.className = aberto ? 'ti ti-chevron-down' : 'ti ti-chevron-up';
+}
+
+function exportarFluxoExcel() {
+  const orig = document.getElementById("tabelaFluxoCompilado");
+  const clone = orig.cloneNode(true);
+  clone.querySelectorAll('.hide-unit-col').forEach(el => el.classList.remove('hide-unit-col'));
+  const wb = XLSX.utils.table_to_book(clone, { sheet: "Fluxo Mensal" });
+  XLSX.writeFile(wb, `Fluxo_Financeiro_${PROJETO_ATIVO.exportPrefix}.xlsx`);
+  showToast('Excel exportado com sucesso!', 'success');
+}
+
+function exportarEspelhoImagem() {
+  const area = document.getElementById("captureArea");
+  showToast('Gerando imagem...', 'info', 2000);
+  html2canvas(area, { backgroundColor: "#FFFFFF", logging: false, scale: 2 }).then(canvas => {
+    const a = document.createElement('a');
+    const temTorres = PROJETO_ATIVO.torres && PROJETO_ATIVO.torres.length > 1;
+    a.download = !temTorres ? `Espelho_${PROJETO_ATIVO.exportPrefix}.png`
+      : (torreAtiva === 'Todas' ? `Espelho_${PROJETO_ATIVO.exportPrefix}_Projeto_Completo.png` : `Espelho_${PROJETO_ATIVO.exportPrefix}_Torre_${torreAtiva}.png`);
+    a.href = canvas.toDataURL();
+    a.click();
+    showToast('Imagem salva!', 'success');
+  });
+}
+
+const styleEl = document.createElement('style');
+styleEl.textContent = `@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`;
+document.head.appendChild(styleEl);
+
+// ═══════════════════════════════════════════════════════════════════
+//  INICIALIZAÇÃO
+// ═══════════════════════════════════════════════════════════════════
+window.onload = function() {
+  montarCardsSelecao();
+  if (localStorage.getItem(LOGIN_STORAGE_KEY)) {
+    liberarAcessoPosLogin();
+  }
+};
+</script>
+
+<script>
+/* ══════════ SIMULADOR COMERCIAL (motor único, config-driven) ══════════ */
+(function(){
+
+function parseFlexible(raw){
+  if(raw===null || raw===undefined) return 0;
+  raw = raw.toString().trim();
+  if(raw==='') return 0;
+  const lastComma = raw.lastIndexOf(',');
+  const lastDot = raw.lastIndexOf('.');
+  let intPart, decPart='';
+  if(lastComma===-1 && lastDot===-1){ intPart = raw; }
+  else {
+    const commaCount = (raw.match(/,/g)||[]).length;
+    const dotCount = (raw.match(/\./g)||[]).length;
+    let decIdx = -1;
+    if(commaCount>0 && dotCount>0){ decIdx = Math.max(lastComma,lastDot); }
+    else if(commaCount>1 || dotCount>1){ decIdx = -1; }
+    else {
+      const idx = commaCount>0?lastComma:lastDot;
+      const digitsAfter = raw.slice(idx+1).replace(/[^0-9]/g,'').length;
+      decIdx = digitsAfter<=2 ? idx : -1;
+    }
+    if(decIdx>=0){ intPart = raw.slice(0,decIdx); decPart = raw.slice(decIdx+1); }
+    else { intPart = raw; }
+  }
+  intPart = intPart.replace(/[.,\s]/g,'');
+  decPart = decPart.replace(/[^0-9]/g,'');
+  const cleaned = intPart + (decPart ? '.'+decPart : '');
+  const v = parseFloat(cleaned);
+  return isFinite(v) ? v : 0;
+}
+const num = id => parseFlexible(document.getElementById(id).value);
+function setNum(id, value, decimals){
+  decimals = decimals===undefined ? 2 : decimals;
+  document.getElementById(id).value = (value||0).toLocaleString('pt-BR',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+}
+const fmtBRLsim = v => (isFinite(v)?v:0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const fmtBRL2 = v => (isFinite(v)?v:0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2});
+const fmtPct = v => (isFinite(v)?v:0).toLocaleString('pt-BR',{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1});
+function addMonths(date,n){ const d=new Date(date.getTime()); d.setMonth(d.getMonth()+n); return d; }
+function fmtDate(d){ return d.toLocaleDateString('pt-BR'); }
+function monthlyRate(annual){ return Math.pow(1+annual,1/12)-1; }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function addMonthsISO(iso, n){ const d = new Date(iso); d.setMonth(d.getMonth()+n); return d.toISOString().slice(0,10); }
+function mesesEntre(dataBase, dataAlvo){ return (dataAlvo.getFullYear()-dataBase.getFullYear())*12 + (dataAlvo.getMonth()-dataBase.getMonth()); }
+
+document.getElementById('dataProposta').value = todayISO();
+document.getElementById('dataAto').value = todayISO();
+document.getElementById('dataBaseCustom').value = todayISO();
+
+// ---------- LISTA DE UNIDADES DO SIMULADOR (a partir do projeto ativo) ----------
+function getListaCompletaUnidadesSimulador() {
+  const proj = window.PROJETO_ATIVO;
+  if (!proj) return [];
+  if (proj.pricingTable) {
+    return proj.pricingTable.map(row => ({ u: row.u, label: row.label, m: row.m, pre: row.pre, lanc: row.lanc }));
+  }
+  return proj.buildUnits().map(u => {
+    const precoM2 = u.metragem > 0 ? (u.valor_tabela / u.metragem) : 0;
+    const especialLabel = u.especial ? ' - ' + u.especial : '';
+    const torrePrefix = u.torre ? u.torre + ' - ' : '';
+    return { u: u.id_unidade, label: `${torrePrefix}${u.numero_unidade || u.id_unidade}${especialLabel}`, m: u.metragem, pre: precoM2, lanc: precoM2 };
+  });
+}
+window.getListaCompletaUnidadesSimulador = getListaCompletaUnidadesSimulador;
+
+const unidadeSelect = document.getElementById('unidadeSelect');
+function unidadeEspelhoAtual(x){
+  if (typeof units === 'undefined' || !Array.isArray(units) || !x) return null;
+  return units.find(u => String(u.id_unidade) === String(x.u)) || null;
+}
+function unidadeDisponivelSim(x){
+  const live = unidadeEspelhoAtual(x);
+  if (!live) return true;
+  return live.status_espelho === 'DISPONIVEL';
+}
+function populateUnidadeSelect(){
+  const lista = window.LISTA_UNIDADES_SIM || [];
+  const valorAtual = unidadeSelect.value;
+  unidadeSelect.innerHTML = '<option value="">— selecionar unidade —</option>';
+  let escondidas = 0;
+  lista.forEach(x=>{
+    if(!unidadeDisponivelSim(x)){ escondidas++; return; }
+    const opt = document.createElement('option');
+    opt.value = x.u;
+    opt.textContent = x.label+' — '+x.m.toLocaleString('pt-BR',{minimumFractionDigits:2})+' m²';
+    unidadeSelect.appendChild(opt);
+  });
+  const aindaExiste = Array.from(unidadeSelect.options).some(o=>o.value===valorAtual);
+  if(aindaExiste) unidadeSelect.value = valorAtual;
+  else if(valorAtual) unidadeSelect.value = '';
+  const note = document.getElementById('unidadeIndisponiveisNote');
+  if(note) note.textContent = escondidas>0 ? escondidas+' unidade(s) fora do "Disponível" no Espelho não aparecem aqui.' : '';
+}
+window.populateUnidadeSelect = populateUnidadeSelect;
+function currentUnidade(){
+  const lista = window.LISTA_UNIDADES_SIM || [];
+  return lista.find(x=>x.u===unidadeSelect.value) || null;
+}
+
+function refreshUnidadeInfo(){
+  const un = currentUnidade();
+  const fase = document.getElementById('faseSelect').value;
+  const hint = document.getElementById('unidadeInfoHint');
+  const manual = document.getElementById('manualRefToggle').checked;
+  if(!un){
+    if(!manual){ document.getElementById('valorReferencia').value=''; document.getElementById('valorReferenciaCustom').value=''; }
+    hint.textContent = 'Selecione uma unidade acima para carregar metragem e preço de tabela direto da planilha.';
+    hint.className = 'hint strip no-print';
+    document.getElementById('espelhoActionsBar').style.display = 'none';
+    render();
+    return;
+  }
+  const rsm2 = fase==='pre' ? un.pre : un.lanc;
+  const nominalTabela = rsm2 * un.m;
+  setNum('metragemRef', un.m); setNum('metragemM2', un.m); setNum('metragemCustom', un.m);
+  if(!manual){ setNum('valorReferencia', nominalTabela, 0); setNum('valorReferenciaCustom', nominalTabela, 0); }
+  hint.innerHTML = 'Unidade '+un.label+' — área privativa total '+un.m.toLocaleString('pt-BR',{minimumFractionDigits:2})+' m² · '+
+    (fase==='pre'?'Pré-lançamento':'Lançamento')+': '+fmtBRL2(rsm2)+'/m² → valor de tabela '+fmtBRLsim(nominalTabela)+'.';
+  hint.className = 'hint strip no-print';
+  atualizarBarraAcoesEspelho(un);
+  render();
+}
+function atualizarBarraAcoesEspelho(un){
+  const bar = document.getElementById('espelhoActionsBar');
+  const live = unidadeEspelhoAtual(un);
+  const podeSalvar = typeof window.salvarUnidadeData === 'function' && !!live;
+  if(!podeSalvar){ bar.style.display='none'; return; }
+  bar.style.display = 'flex';
+  const cfg = (typeof STATUS_CONFIG !== 'undefined' && STATUS_CONFIG[live.status_espelho]) || {};
+  const label = cfg.label || live.status_espelho;
+  const badge = document.getElementById('espelhoStatusAtual');
+  badge.textContent = label;
+  badge.style.color = cfg.color || 'var(--ink)';
+}
+unidadeSelect.addEventListener('change', refreshUnidadeInfo);
+document.getElementById('faseSelect').addEventListener('change', refreshUnidadeInfo);
+document.getElementById('manualRefToggle').addEventListener('change', (e)=>{
+  const readonly = !e.target.checked;
+  document.getElementById('valorReferencia').readOnly = readonly;
+  document.getElementById('valorReferenciaCustom').readOnly = readonly;
+  if(e.target.checked){
+    document.getElementById('valorReferenciaHint').textContent = 'Digite o valor de tabela manualmente (nenhuma unidade real associada).';
+    document.getElementById('valorReferenciaCustomHint').textContent = 'Digite o valor de tabela manualmente (nenhuma unidade real associada).';
+  } else { refreshUnidadeInfo(); }
+});
+document.getElementById('valorReferencia').addEventListener('input', ()=>{ if(document.getElementById('manualRefToggle').checked) render(); });
+document.getElementById('valorReferenciaCustom').addEventListener('input', ()=>{ if(document.getElementById('manualRefToggle').checked) render(); });
+
+// ---------- TABS ----------
+let activeFlow = 'padrao';
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    activeFlow = t.dataset.flow;
+    document.getElementById('panelPadrao').style.display = activeFlow==='padrao' ? 'block':'none';
+    document.getElementById('panelCustom').style.display = activeFlow==='custom' ? 'block':'none';
+    render();
+  });
+});
+
+// ---------- VALUE MODE TOGGLE ----------
+let valueMode = 'total';
+document.querySelectorAll('#panelPadrao .toggle-group button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#panelPadrao .toggle-group button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    valueMode = b.dataset.mode;
+    document.getElementById('valorTotalWrap').style.display = valueMode==='total' ? 'block':'none';
+    document.getElementById('valorM2Wrap').style.display = valueMode==='m2' ? 'block':'none';
+    render();
+  });
+});
+function getUnitValuePadrao(){
+  if(valueMode==='total') return num('valorTotal');
+  return num('valorM2') * num('metragemM2');
+}
+
+// ---------- CUSTOM ROWS ----------
+const TIPO_INFO = {
+  ato:        {label:'Ato (mês inicial)',        intervalo:0,  qtdFixa:1, dataFixa:'inicio'},
+  mensais:    {label:'Mensais',                  intervalo:1,  qtdFixa:null},
+  trimestrais:{label:'Trimestrais (3 em 3 meses)',intervalo:3, qtdFixa:null},
+  semestrais: {label:'Semestrais (6 em 6 meses)', intervalo:6, qtdFixa:null},
+  anuais:     {label:'Anuais (12 em 12 meses)',   intervalo:12,qtdFixa:null},
+  unica:      {label:'Única (data aberta, 1 parcela)', intervalo:0, qtdFixa:1, dataFixa:'livre'},
+  chave:      {label:'Chave (travada no último mês)',  intervalo:0, qtdFixa:1, dataFixa:'auto'}
+};
+let customRows = [];
+function renderCustomRows(){
+  const wrap = document.getElementById('customRows');
+  wrap.innerHTML='';
+  customRows.forEach((r,i)=>{
+    const info = TIPO_INFO[r.tipo];
+    const row = document.createElement('div');
+    row.className='custom-row';
+    const qtdDisabled = info.qtdFixa!==null;
+    const dataField = info.dataFixa==='auto'
+      ? `<div class="data-auto" id="chaveDataAuto_${i}">calculada automaticamente</div>`
+      : `<input class="data" type="date" value="${r.dataInicio||todayISO()}" data-i="${i}" data-f="dataInicio">`;
+    row.innerHTML = `
+      <div class="custom-row-top">
+        <select data-i="${i}" data-f="tipo">
+          ${Object.entries(TIPO_INFO).map(([k,v])=>`<option value="${k}" ${k===r.tipo?'selected':''}>${v.label}</option>`).join('')}
+        </select>
+        <div class="qtd-wrap"><label>nº parc.</label>
+          <input class="qtd" type="text" value="${qtdDisabled?info.qtdFixa:r.qtd}" data-i="${i}" data-f="qtd" ${qtdDisabled?'disabled':''}>
+        </div>
+      </div>
+      <div class="custom-row-bottom">
+        <input class="valor" type="text" value="${r.valor}" placeholder="valor R$" data-i="${i}" data-f="valor">
+        ${dataField}
+        <button class="icon-btn" data-i="${i}">×</button>
+      </div>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('select[data-f="tipo"]').forEach(sel=>{
+    sel.addEventListener('change', e=>{
+      const i=+e.target.dataset.i;
+      customRows[i].tipo = e.target.value;
+      const info = TIPO_INFO[customRows[i].tipo];
+      if(info.qtdFixa!==null) customRows[i].qtd = info.qtdFixa;
+      renderCustomRows(); render();
+    });
+  });
+  wrap.querySelectorAll('input[data-f="qtd"], input[data-f="valor"], input[data-f="dataInicio"]').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const i=+e.target.dataset.i, f=e.target.dataset.f;
+      if(f==='dataInicio') customRows[i][f]=e.target.value;
+      else customRows[i][f]= parseFlexible(e.target.value);
+      render();
+    });
+  });
+  wrap.querySelectorAll('.icon-btn').forEach(btn=>{
+    btn.addEventListener('click',e=>{ customRows.splice(+e.target.dataset.i,1); renderCustomRows(); render(); });
+  });
+}
+document.getElementById('addRowBtn').addEventListener('click',()=>{
+  const last = customRows[customRows.length-1];
+  const novaData = last && last.dataInicio ? addMonthsISO(last.dataInicio, 1) : todayISO();
+  customRows.push({tipo:'mensais', qtd:1, valor:0, dataInicio: novaData});
+  renderCustomRows(); render();
+});
+
+function montarCustomRowsDoProjeto(){
+  const sim = window.PROJETO_ATIVO.simulador;
+  customRows = sim.customRowsDefault.map(r => ({
+    tipo: r.tipo, qtd: r.qtd, valor: r.valor,
+    dataInicio: r.offsetMeses===null ? null : (r.offsetMeses===0 ? todayISO() : addMonthsISO(todayISO(), r.offsetMeses))
+  }));
+  renderCustomRows();
+}
+window.montarCustomRowsDoProjeto = montarCustomRowsDoProjeto;
+
+// ---------- PV FIX ----------
+let pvFix = null;
+function applyPvFixToRows(rows, r, tabelaVP){
+  if(!pvFix || pvFix.mode!=='parcela' || !(tabelaVP>0)) return;
+  const vpRaw = rows.reduce((s,row)=> s + row.valor/Math.pow(1+r,row.mes), 0);
+  const shortfall = tabelaVP - vpRaw;
+  if(shortfall<=0) return;
+  const target = rows.find(row=>row.mes===pvFix.mes);
+  if(!target) return;
+  const addNominal = shortfall * Math.pow(1+r, pvFix.mes);
+  target.valor += addNominal;
+  target.desc += ' (+ ajuste PV)';
+  target.ajuste = true;
+}
+
+// ---------- SCHEDULE BUILDER GENÉRICO (config-driven por projeto) ----------
+function buildFlowRows(cfg, valor, cv, n, primeiro, intervalo, dataAto){
+  const rows = [];
+  rows.push({mes:0, data:dataAto, desc: cfg.labelEntrada + (cfg.labelEntrada.includes('Sinal')?'':' (Sinal)'), valor: valor*cv.entrada, milestone:true});
+
+  if (cfg.temJanela) {
+    rows.push({mes:1, data:addMonths(dataAto,1), desc:'Reforço 30 dias', valor:valor*cv.janela/2, milestone:true});
+    rows.push({mes:2, data:addMonths(dataAto,2), desc:'Reforço 60 dias', valor:valor*cv.janela/2, milestone:true});
+  }
+
+  const reinforcementMonths = new Map();
+  if (cfg.mergeAnualComMensal) {
+    for (let i=0;i<cfg.numAnuais;i++) {
+      const m = primeiro + i*intervalo;
+      reinforcementMonths.set(m, (reinforcementMonths.get(m)||0) + cv.anuais*valor/cfg.numAnuais);
+    }
+  }
+  for (let i=1;i<=n;i++) {
+    const m = cfg.mensalInicio - 1 + i;
+    let v = cv.mensais*valor/n;
+    let desc = 'Parcela mensal';
+    let milestone = false;
+    if (reinforcementMonths.has(m)) { v += reinforcementMonths.get(m); desc = 'Mensal + Reforço anual'; milestone = true; }
+    rows.push({mes:m, data:addMonths(dataAto,m), desc, valor:v, milestone});
+  }
+  if (!cfg.mergeAnualComMensal) {
+    for (let i=0;i<cfg.numAnuais;i++) {
+      const m = primeiro + i*intervalo;
+      rows.push({mes:m, data:addMonths(dataAto,m), desc:'Reforço anual', valor:cv.anuais*valor/cfg.numAnuais, milestone:true});
+    }
+  }
+
+  const mesesInfo = [];
+  cfg.milestones.forEach((ms, idx) => {
+    let mes, data;
+    if (ms.dateMode === 'fixed') { data = ms.data; mes = mesesEntre(dataAto, ms.data); }
+    else { mes = n + ms.mesesAposUltimaMensal; data = addMonths(dataAto, mes); }
+    rows.push({mes, data, desc: ms.desc, valor: valor*cv['milestone'+idx], chaves:true});
+    mesesInfo[idx] = mes;
+  });
+
+  rows.sort((a,b)=>a.mes-b.mes);
+  return {rows, mesesInfo};
+}
+
+function lerCamposValores(prefix, cfg){
+  const cv = { entrada: num(prefix+'Entrada')/100, mensais: num(prefix+'Mensais')/100, anuais: num(prefix+'Anuais')/100 };
+  cv.janela = cfg.temJanela ? num(prefix+'Janela')/100 : 0;
+  cfg.milestones.forEach((ms,idx)=> cv['milestone'+idx] = num(prefix+'Milestone'+idx)/100);
+  return cv;
+}
+
+function getSomaPercentuaisPadrao(){
+  const cfg = window.PROJETO_ATIVO.simulador;
+  const cv = lerCamposValores('campo', cfg);
+  let s = cv.entrada + cv.janela + cv.mensais + cv.anuais;
+  cfg.milestones.forEach((ms,idx)=> s += cv['milestone'+idx]);
+  s *= 100;
+  if (document.getElementById('reforcoExtraToggle').checked) s += num('reforcoExtraPct');
+  return s;
+}
+
+function buildPadraoSchedule(){
+  const cfg = window.PROJETO_ATIVO.simulador;
+  const valor = getUnitValuePadrao();
+  const cv = lerCamposValores('campo', cfg);
+  const n = Math.round(num('numMensais'))||cfg.numMensaisDefault;
+  const primeiro = Math.round(num('primeiroReforco'))||cfg.primeiroReforcoDefault;
+  const intervalo = Math.round(num('intervaloReforco'))||cfg.intervaloReforcoDefault;
+  const dataAto = new Date(document.getElementById('dataAto').value || todayISO());
+  const {rows} = buildFlowRows(cfg, valor, cv, n, primeiro, intervalo, dataAto);
+
+  if (document.getElementById('reforcoExtraToggle').checked) {
+    const extraPct = num('reforcoExtraPct')/100;
+    const [ey,em] = document.getElementById('reforcoExtraData').value.split('-').map(Number);
+    const mesExtra = (ey-dataAto.getFullYear())*12 + (em-1-dataAto.getMonth());
+    const extraValor = valor*extraPct;
+    const existente = rows.find(row=>row.mes===mesExtra);
+    if(existente){ existente.valor += extraValor; existente.desc += ' + Reforço extra'; existente.milestone = true; }
+    else if(mesExtra>=0) { rows.push({mes:mesExtra, data:new Date(ey,em-1,dataAto.getDate()), desc:'Reforço extra', valor:extraValor, milestone:true}); rows.sort((a,b)=>a.mes-b.mes); }
+  }
+
+  const taxaAnual = num('taxaAnual')/100;
+  const valorReferencia = num('valorReferencia');
+  const r = monthlyRate(taxaAnual);
+  const tabPrimeiro = Math.round(num('tabPrimeiroReforco'))||cfg.tabPrimeiroReforcoDefault;
+  const tabIntervalo = Math.round(num('tabIntervaloReforco'))||cfg.tabIntervaloReforcoDefault;
+  const tabela = buildTabelaVP(valorReferencia, taxaAnual, dataAto, n, tabPrimeiro, tabIntervalo);
+  applyPvFixToRows(rows, r, tabela.vp);
+  return {rows, valor, metragem: num('metragemRef'), taxaAnual, valorReferencia, tabela};
+}
+
+function expandCustomRows(dataBase){
+  const expanded = [];
+  const naoChave = customRows.filter(r=>r.tipo!=='chave');
+  naoChave.forEach(r=>{
+    const info = TIPO_INFO[r.tipo];
+    const qtd = info.qtdFixa!==null ? info.qtdFixa : (Math.round(r.qtd)||1);
+    const dataInicio = r.dataInicio || todayISO();
+    for(let i=0;i<qtd;i++){
+      const dataPagamento = info.intervalo>0 ? addMonthsISO(dataInicio, i*info.intervalo) : dataInicio;
+      expanded.push({ data: new Date(dataPagamento), desc: info.label + (qtd>1 ? ' ('+(i+1)+'/'+qtd+')' : ''), valor: r.valor, tipo: r.tipo,
+        milestone: r.tipo==='anuais' || r.tipo==='semestrais' || r.tipo==='trimestrais' });
+    }
+  });
+  const chaveRows = customRows.filter(r=>r.tipo==='chave');
+  const dataEntrega = document.getElementById('dataEntregaCustom').value
+    ? new Date(document.getElementById('dataEntregaCustom').value)
+    : (expanded.length ? new Date(Math.max(...expanded.map(x=>x.data.getTime()))) : new Date(dataBase));
+  chaveRows.forEach(r=>{ expanded.push({ data: new Date(dataEntrega.getTime()), desc:'Chave / Repasse', valor:r.valor, tipo:'chave', chaves:true }); });
+  const baseY = dataBase.getFullYear(), baseM = dataBase.getMonth();
+  expanded.forEach(row=>{ row.mes = (row.data.getFullYear()-baseY)*12 + (row.data.getMonth()-baseM); });
+  expanded.sort((a,b)=>a.mes-b.mes);
+  customRows.forEach((r,i)=>{
+    if(r.tipo==='chave'){ const el = document.getElementById('chaveDataAuto_'+i); if(el) el.textContent = 'entrega: '+dataEntrega.toLocaleDateString('pt-BR'); }
+  });
+  return expanded;
+}
+
+function buildCustomSchedule(){
+  const cfg = window.PROJETO_ATIVO.simulador;
+  const dataBase = new Date(document.getElementById('dataBaseCustom').value || todayISO());
+  const rows = expandCustomRows(dataBase);
+  const taxaAnual = num('taxaAnualCustom')/100;
+  const valorReferencia = num('valorReferenciaCustom');
+  const r = monthlyRate(taxaAnual);
+  const tabPrimeiro = Math.round(num('tabPrimeiroReforco'))||cfg.tabPrimeiroReforcoDefault;
+  const tabIntervalo = Math.round(num('tabIntervaloReforco'))||cfg.tabIntervaloReforcoDefault;
+  const tabela = buildTabelaVP(valorReferencia, taxaAnual, dataBase, cfg.numMensaisDefault, tabPrimeiro, tabIntervalo);
+  applyPvFixToRows(rows, r, tabela.vp);
+  const valor = rows.reduce((s,x)=>s+x.valor,0);
+  return {rows, valor, metragem: num('metragemCustom'), taxaAnual, valorReferencia, tabela};
+}
+
+function buildTabelaVP(nominalTabela, taxaAnual, dataAto, n, primeiro, intervalo){
+  if(!(nominalTabela>0)) return {nominal:0, vp:0};
+  const cfg = window.PROJETO_ATIVO.simulador;
+  const fase = document.getElementById('faseSelect').value;
+  const prefix = fase==='pre' ? 'tPre' : 'tLanc';
+  const cv = lerCamposValores(prefix, cfg);
+  const {rows} = buildFlowRows(cfg, nominalTabela, cv, n, primeiro, intervalo, dataAto);
+  const r = monthlyRate(taxaAnual);
+  let nominal=0, vp=0;
+  rows.forEach(row=>{ nominal += row.valor; vp += row.valor/Math.pow(1+r,row.mes); });
+  return {nominal, vp};
+}
+
+// ---------- RENDER ----------
+let lastComputedRows = [];
+function render(){
+  const data = activeFlow==='padrao' ? buildPadraoSchedule() : buildCustomSchedule();
+  const { rows, metragem, taxaAnual, valorReferencia, tabela } = data;
+  const r = monthlyRate(taxaAnual);
+  lastComputedRows = rows;
+
+  let nominal=0, vp=0;
+  rows.forEach(row=>{ row.vp = row.valor / Math.pow(1+r, row.mes); nominal += row.valor; vp += row.vp; });
+
+  if(activeFlow==='padrao'){
+    const s = getSomaPercentuaisPadrao();
+    const ind = document.getElementById('sumIndicator');
+    ind.textContent = 'Soma: '+s.toFixed(1)+'%'+(Math.abs(s-100)<0.05?' ✓':' — deveria ser 100%');
+    ind.className = 'sum-indicator ' + (Math.abs(s-100)<0.05?'ok':'err');
+  }
+
+  document.getElementById('outTotal').innerHTML = fmtBRLsim(nominal);
+  document.getElementById('outVP').innerHTML = fmtBRLsim(vp);
+  document.getElementById('outM2').innerHTML = metragem>0 ? fmtBRL2(nominal/metragem)+' <small>/m²</small>' : '—';
+  document.getElementById('outTabelaNominal').innerHTML = valorReferencia>0 ? fmtBRLsim(valorReferencia) : '—';
+  document.getElementById('outTabelaVP').innerHTML = tabela && tabela.vp>0 ? fmtBRLsim(tabela.vp) : '—';
+
+  const descNomCard = document.getElementById('outDescNomCard');
+  const descPvCard = document.getElementById('outDescPvCard');
+  const pvFixOpenBtn = document.getElementById('pvFixOpenBtn');
+  if(valorReferencia>0 && tabela && tabela.vp>0){
+    const descNom = 1 - nominal/valorReferencia;
+    const descPv = 1 - vp/tabela.vp;
+    document.getElementById('outDescNom').textContent = fmtPct(descNom);
+    document.getElementById('outDescPv').textContent = fmtPct(descPv);
+    descNomCard.className = 'card discount' + (descNom<0?' negative':'');
+    descNomCard.querySelector('.k').textContent = descNom>=0 ? 'Desconto Nominal' : 'Ágio Nominal';
+    descPvCard.className = 'card discount' + (descPv<0?' negative':'');
+    descPvCard.querySelector('.k').textContent = descPv>=0 ? 'Desconto no PV' : 'Ágio no PV';
+    pvFixOpenBtn.style.display = descPv>0.0005 ? 'inline-flex' : 'none';
+    if(descPv<=0.0005) document.getElementById('pvFixPanel').style.display='none';
+  } else {
+    document.getElementById('outDescNom').textContent = '—';
+    document.getElementById('outDescPv').textContent = '—';
+    descNomCard.className='card'; descNomCard.querySelector('.k').textContent='Desconto Nominal';
+    descPvCard.className='card'; descPvCard.querySelector('.k').textContent='Desconto no PV';
+    pvFixOpenBtn.style.display='none';
+    document.getElementById('pvFixPanel').style.display='none';
+  }
+
+  const rowSelect = document.getElementById('pvFixRowSelect');
+  const prevSel = rowSelect.value;
+  rowSelect.innerHTML = rows.map(row=>`<option value="${row.mes}">Mês ${row.mes} — ${row.desc} (${fmtBRL2(row.valor)})</option>`).join('');
+  if(prevSel) rowSelect.value = prevSel;
+
+  const body = document.getElementById('scheduleBody');
+  body.innerHTML = rows.map(row=>`
+    <tr class="${row.chaves?'chaves-row':(row.milestone?'milestone':'')}">
+      <td>${row.mes}</td><td>${fmtDate(row.data)}</td><td>${row.desc}</td>
+      <td class="num">${fmtBRL2(row.valor)}</td><td class="num">${fmtBRL2(row.vp)}</td>
+    </tr>`).join('');
+  document.getElementById('footNominal').textContent = fmtBRL2(nominal);
+  document.getElementById('footVP').textContent = fmtBRL2(vp);
+
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '<div class="timeline-baseline"></div>';
+  const maxMes = Math.max(...rows.map(x=>x.mes),1);
+  const maxVal = Math.max(...rows.map(x=>x.valor),1);
+  rows.forEach(row=>{
+    const left = 4 + (row.mes/maxMes)*(100-8);
+    const h = 8 + (row.valor/maxVal)*72;
+    const bar = document.createElement('div');
+    bar.className = 'tl-bar' + (row.chaves?' chaves':(row.milestone?' reforco':''));
+    bar.style.left = left+'%'; bar.style.height = h+'px';
+    bar.title = row.desc+' — '+fmtBRL2(row.valor);
+    tl.appendChild(bar);
+  });
+  [0, Math.round(maxMes/2), maxMes].forEach(m=>{
+    const lbl = document.createElement('div');
+    lbl.className='tl-label'; lbl.style.left = (4+(m/maxMes)*(100-8))+'%'; lbl.textContent = 'mês '+m;
+    tl.appendChild(lbl);
+  });
+}
+
+// ---------- LIVE BINDINGS ----------
+const MESES_ABREV = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function updateReforcoExtraLabel(){
+  const val = document.getElementById('reforcoExtraData').value;
+  if(!val) return;
+  const [y,m] = val.split('-').map(Number);
+  document.getElementById('reforcoExtraMesLabel').textContent = MESES_ABREV[m-1]+'/'+y;
+}
+document.getElementById('reforcoExtraToggle').addEventListener('change', (e)=>{
+  document.getElementById('reforcoExtraFields').style.display = e.target.checked ? 'block' : 'none';
+  document.getElementById('reforcoExtraPct').disabled = !e.target.checked;
+  render();
+});
+document.getElementById('reforcoExtraData').addEventListener('input', ()=>{ updateReforcoExtraLabel(); render(); });
+document.getElementById('reforcoExtraPct').addEventListener('input', render);
+updateReforcoExtraLabel();
+document.querySelectorAll('#panelPadrao input, #panelCustom input').forEach(inp=>{
+  if(inp.id==='valorReferencia' || inp.id==='valorReferenciaCustom') return;
+  inp.addEventListener('input', render);
+});
+
+// ---------- PV FIX UI ----------
+let pvFixUiMode = 'parcela';
+document.getElementById('pvFixOpenBtn').addEventListener('click',()=>{ document.getElementById('pvFixPanel').style.display='block'; updatePvFixExplain(); });
+document.getElementById('pvFixClose').addEventListener('click',()=>{ document.getElementById('pvFixPanel').style.display='none'; });
+document.querySelectorAll('[data-pvmode]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-pvmode]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    pvFixUiMode = b.dataset.pvmode;
+    document.getElementById('pvFixRowWrap').style.display = pvFixUiMode==='parcela' ? 'flex' : 'none';
+    updatePvFixExplain();
+  });
+});
+function updatePvFixExplain(){
+  const el = document.getElementById('pvFixExplain');
+  el.textContent = pvFixUiMode==='parcela'
+    ? 'O valor que falta pra zerar o desconto no PV é somado, em nominal, só na parcela escolhida — as demais ficam do jeito que estão.'
+    : 'O preço total da unidade é reajustado para cima, proporcionalmente em toda a estrutura de pagamento, até o PV bater com o VP de tabela.';
+}
+document.getElementById('pvFixApply').addEventListener('click',()=>{
+  if(pvFixUiMode==='parcela'){
+    const mes = parseInt(document.getElementById('pvFixRowSelect').value,10);
+    pvFix = {mode:'parcela', mes};
+    render();
+  } else {
+    const data = activeFlow==='padrao' ? buildPadraoSchedule() : buildCustomSchedule();
+    const r = monthlyRate(data.taxaAnual);
+    const vpAtual = data.rows.reduce((s,row)=> s + row.valor/Math.pow(1+r,row.mes), 0);
+    const tabelaVP = data.tabela ? data.tabela.vp : 0;
+    if(tabelaVP>0 && vpAtual>0){
+      const fator = tabelaVP/vpAtual;
+      if(activeFlow==='padrao'){
+        if(valueMode==='total'){ document.getElementById('valorTotal').value = Math.round(getUnitValuePadrao()*fator); }
+        else { document.getElementById('valorM2').value = (num('valorM2')*fator).toFixed(2); }
+      } else {
+        customRows.forEach(row=>{ row.valor = Math.round(row.valor*fator); });
+        renderCustomRows();
+      }
+    }
+    pvFix = null; render();
+  }
+});
+document.getElementById('pvFixRemove').addEventListener('click',()=>{ pvFix = null; render(); });
+
+// ---------- AÇÕES NO ESPELHO (reservar / entrar em processo) ----------
+async function salvarStatusNoEspelho(novoStatus, labelAmigavel){
+  const un = currentUnidade();
+  const live = un ? unidadeEspelhoAtual(un) : null;
+  if(!live || typeof window.salvarUnidadeData !== 'function'){
+    showToast('Essa ação só funciona com uma unidade real selecionada.', 'error');
+    return;
+  }
+  const cliente = document.getElementById('clienteNome').value.trim();
+  const corretor = document.getElementById('corretorNome').value.trim();
+  const totalRows = lastComputedRows.length;
+  const confirmMsg = `Confirma marcar a unidade ${live.id_unidade} como "${labelAmigavel}"`+
+    (cliente ? ` para ${cliente}` : '')+
+    ` e salvar este fluxo (${totalRows} parcelas) na planilha? Isso substitui o fluxo financeiro atual dessa unidade no Espelho.`;
+  if(!confirm(confirmMsg)) return;
+
+  live.status_espelho = novoStatus;
+  if(cliente) live.cliente_nome = cliente;
+  if(corretor) live.observacoes = (live.observacoes ? live.observacoes+' · ' : '') + 'Proposta simulada por '+corretor;
+  if(novoStatus==='PROCESSO')      live.fase_esteira = Math.max(live.fase_esteira||1, 2);
+  if(novoStatus==='RESERVA_VENDA') live.fase_esteira = Math.max(live.fase_esteira||1, 3);
+
+  live.fluxo_financeiro = lastComputedRows.map(row=>({
+    data_vencimento: String(row.data.getMonth()+1).padStart(2,'0')+'/'+row.data.getFullYear(),
+    data_vencimento_dia: String(row.data.getDate()).padStart(2,'0')+'/'+String(row.data.getMonth()+1).padStart(2,'0')+'/'+row.data.getFullYear(),
+    descricao: row.desc, valor: Math.round(row.valor*100)/100
+  }));
+
+  if(typeof selectedUnitId !== 'undefined') window.selectedUnitId = live.id_unidade;
+  if(typeof renderKPIs === 'function') renderKPIs();
+  if(typeof renderGaveta === 'function') renderGaveta(live.id_unidade);
+  if(typeof renderEspelho === 'function') renderEspelho();
+
+  await window.salvarUnidadeData(live.id_unidade);
+  atualizarBarraAcoesEspelho(un);
+}
+document.getElementById('btnEntrarProcesso').addEventListener('click', ()=>salvarStatusNoEspelho('PROCESSO','Em Processo Comercial'));
+document.getElementById('btnReservarUnidade').addEventListener('click', ()=>salvarStatusNoEspelho('RESERVA_VENDA','Reserva Venda'));
+
+// ---------- ACTIONS ----------
+document.getElementById('printBtn').addEventListener('click',()=>window.print());
+document.getElementById('clientModeBtn').addEventListener('click',(e)=>{
+  document.getElementById('simComercial').classList.toggle('client-mode');
+  e.target.classList.toggle('active');
+  e.target.textContent = document.getElementById('simComercial').classList.contains('client-mode') ? '✎ Modo edição' : '🖥 Modo cliente';
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Limpar simulação atual e começar um novo cliente?')) return;
+  const cfg = window.PROJETO_ATIVO.simulador;
+  document.getElementById('clienteNome').value='';
+  document.getElementById('corretorNome').value='';
+  document.getElementById('valorTotal').value=String(cfg.valorTotalDefault);
+  document.getElementById('unidadeSelect').value='';
+  document.getElementById('manualRefToggle').checked=false;
+  document.getElementById('valorReferencia').readOnly=true;
+  document.getElementById('valorReferenciaCustom').readOnly=true;
+  document.getElementById('dataAto').value=todayISO();
+  document.getElementById('dataProposta').value=todayISO();
+  pvFix = null;
+  document.getElementById('pvFixPanel').style.display='none';
+  montarCustomRowsDoProjeto();
+  refreshUnidadeInfo();
+});
+
+// ---------- MONTAGEM DOS CAMPOS DO SIMULADOR CONFORME O PROJETO ATIVO ----------
+function montarCamposSimulador(){
+  const proj = window.PROJETO_ATIVO;
+  const cfg = proj.simulador;
+  const temMilestone2 = cfg.milestones.length > 1;
+
+  document.getElementById('labelCampoEntrada').textContent = cfg.labelEntrada;
+  document.getElementById('rowCampoJanela').style.display = cfg.temJanela ? 'flex' : 'none';
+  document.getElementById('labelCampoMensais').textContent = cfg.labelMensais;
+  document.getElementById('labelCampoAnuais').textContent = cfg.labelAnuais;
+  document.getElementById('labelCampoMilestone0').textContent = cfg.milestones[0].label;
+  document.getElementById('rowCampoMilestone1').style.display = temMilestone2 ? 'flex' : 'none';
+  if (temMilestone2) document.getElementById('labelCampoMilestone1').textContent = cfg.milestones[1].label;
+
+  document.getElementById('campoEntrada').value = cfg.defaultPcts.entrada;
+  if (cfg.temJanela) document.getElementById('campoJanela').value = cfg.defaultPcts.janela;
+  document.getElementById('campoMensais').value = cfg.defaultPcts.mensais;
+  document.getElementById('campoAnuais').value = cfg.defaultPcts.anuais;
+  document.getElementById('campoMilestone0').value = cfg.milestones[0].defaultPct;
+  if (temMilestone2) document.getElementById('campoMilestone1').value = cfg.milestones[1].defaultPct;
+
+  document.getElementById('numMensais').value = cfg.numMensaisDefault;
+  document.getElementById('primeiroReforco').value = cfg.primeiroReforcoDefault;
+  document.getElementById('intervaloReforco').value = cfg.intervaloReforcoDefault;
+  document.getElementById('tabPrimeiroReforco').value = cfg.tabPrimeiroReforcoDefault;
+  document.getElementById('tabIntervaloReforco').value = cfg.tabIntervaloReforcoDefault;
+
+  document.getElementById('termosNotaBase').textContent =
+    'O VP de tabela não é só o valor nominal descontado — é o valor de tabela pago nos termos padrão daquela fase (abaixo), depois descontado. Ajuste aqui se a incorporadora mudar as condições oficiais.' + (cfg.termosNotaExtra||'');
+  document.getElementById('reforcoExtraContainer').style.display = cfg.reforcoExtraDisponivel ? '' : 'none';
+
+  ['tPre','tLanc'].forEach(prefix=>{
+    const key = prefix==='tPre' ? 'pre' : 'lanc';
+    const prefixCap = prefix==='tPre' ? 'TPre' : 'TLanc'; // os ids de label/row usam "TPre"/"TLanc" (T maiúsculo)
+    const termos = cfg.tabelaTermos[key];
+    document.getElementById('label'+prefixCap+'Entrada').textContent = cfg.labelEntrada;
+    document.getElementById('row'+prefixCap+'Janela').style.display = cfg.temJanela ? 'flex' : 'none';
+    document.getElementById('label'+prefixCap+'Milestone0').textContent = cfg.milestones[0].tabLabel;
+    document.getElementById('row'+prefixCap+'Milestone1').style.display = temMilestone2 ? 'flex' : 'none';
+    if (temMilestone2) document.getElementById('label'+prefixCap+'Milestone1').textContent = cfg.milestones[1].tabLabel;
+
+    document.getElementById(prefix+'Entrada').value = termos.entrada;
+    if (cfg.temJanela) document.getElementById(prefix+'Janela').value = termos.janela;
+    document.getElementById(prefix+'Mensais').value = termos.mensais;
+    document.getElementById(prefix+'Anuais').value = termos.anuais;
+    document.getElementById(prefix+'Milestone0').value = termos.milestone0;
+    if (temMilestone2) document.getElementById(prefix+'Milestone1').value = termos.milestone1;
+  });
+
+  document.getElementById('valorTotal').value = cfg.valorTotalDefault;
+  document.getElementById('valorM2').value = cfg.valorM2Default;
+  document.getElementById('metragemRef').value = cfg.metragemDefault;
+  document.getElementById('metragemM2').value = cfg.metragemDefault;
+  document.getElementById('metragemCustom').value = cfg.metragemDefault;
+  document.getElementById('dataEntregaCustom').value = cfg.dataEntregaCustomDefault;
+
+  document.getElementById('reforcoExtraToggle').checked = cfg.reforcoExtraDefaultOn;
+  document.getElementById('reforcoExtraPct').value = cfg.reforcoExtraDefaultPct;
+  document.getElementById('reforcoExtraPct').disabled = !cfg.reforcoExtraDefaultOn;
+  document.getElementById('reforcoExtraData').value = cfg.reforcoExtraDefaultMes;
+  document.getElementById('reforcoExtraFields').style.display = cfg.reforcoExtraDefaultOn ? 'block' : 'none';
+  updateReforcoExtraLabel();
+
+  document.getElementById('clienteNome').value = '';
+  document.getElementById('corretorNome').value = '';
+  document.getElementById('unidadeSelect').value = '';
+  document.getElementById('manualRefToggle').checked = false;
+  document.getElementById('valorReferencia').readOnly = true;
+  document.getElementById('valorReferenciaCustom').readOnly = true;
+  document.getElementById('valorReferencia').value = '';
+  document.getElementById('valorReferenciaCustom').value = '';
+  pvFix = null;
+  document.getElementById('pvFixPanel').style.display = 'none';
+
+  montarCustomRowsDoProjeto();
+  window.LISTA_UNIDADES_SIM = getListaCompletaUnidadesSimulador();
+  populateUnidadeSelect();
+  refreshUnidadeInfo();
+  render();
+}
+window.montarCamposSimulador = montarCamposSimulador;
+
+})();
+</script>
+
+</body>
+</html>
