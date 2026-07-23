@@ -11,6 +11,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<script>
+  // Se o cdnjs falhar por qualquer motivo (bloqueio de rede, versão fora do ar, etc.),
+  // carrega o Chart.js de um CDN alternativo (jsDelivr) antes do restante da página rodar.
+  if (typeof Chart === 'undefined') {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"><\/script>');
+  }
+</script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,10 +42,13 @@
   --text-muted: rgba(15,23,23,0.55);
   --gold:     #C7B299;
 
-  /* Status — cores de borda lateral (compartilhado entre TODOS os projetos, não muda com o tema) */
+  /* Status — cores de borda lateral (compartilhado entre TODOS os projetos, não muda com o tema).
+     PROPOSTA e PROCESSO antes eram dois tons de verde quase iguais ao de CV_ASSINADO — difícil
+     de diferenciar rapidamente no grid do Espelho, principalmente pra quem tem daltonismo.
+     Agora cada status tem um matiz claramente distinto (só CV_ASSINADO fica verde, como "concluído"). */
   --st-disponivel:       #9CA3AF;
-  --st-proposta:         #4ADE80;
-  --st-processo:         #22C55E;
+  --st-proposta:         #8B5CF6;
+  --st-processo:         #EC4899;
   --st-reserva_venda:    #F59E0B;
   --st-contrato_enviado: #3B82F6;
   --st-cv_assinado:      #15803D;
@@ -47,6 +58,7 @@
   --proj-primaria:        var(--azul);
   --proj-primaria-escura: var(--azul-dk);
   --proj-acento:          var(--bege);
+  --proj-primaria-rgb:    0,176,185; /* equivalente em "r,g,b" de --azul, pra uso em rgba(); atualizado por selecionarProjeto() */
 }
 
 /* ── RESET & BASE ── */
@@ -197,7 +209,7 @@ header {
 .kpis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
 .kpi-card { background: var(--surface); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 6px; display: flex; flex-direction: column; gap: 0.2rem; min-height: 80px; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s; user-select: none; position: relative; }
 .kpi-card:hover { border-color: var(--border2); background: var(--surface2); transform: translateY(-1px); }
-.kpi-card.kpi-active { border-color: var(--proj-primaria); background: rgba(0,176,185,0.06); }
+.kpi-card.kpi-active { border-color: var(--proj-primaria); background: rgba(var(--proj-primaria-rgb),0.06); }
 .kpi-card.kpi-active::after { content: '✕ limpar'; position: absolute; top: 0.4rem; right: 0.6rem; font-size: 0.6rem; color: var(--proj-primaria-escura); opacity: 0.8; letter-spacing: 0.05em; }
 .kpi-card p { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 500; letter-spacing: 0.05em; }
 .kpi-card h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); }
@@ -247,7 +259,7 @@ header {
 
 .unit-box { flex: 1; background: var(--surface2); border: 1px solid var(--border); padding: 0.65rem 0.75rem; border-radius: 4px; cursor: pointer; transition: border-color 0.15s, transform 0.15s; position: relative; min-width: 0; }
 .unit-box:hover { border-color: var(--proj-primaria); transform: translateY(-1px); }
-.unit-box.selected { border-color: var(--proj-primaria) !important; box-shadow: 0 0 14px rgba(0,176,185,0.18); }
+.unit-box.selected { border-color: var(--proj-primaria) !important; box-shadow: 0 0 14px rgba(var(--proj-primaria-rgb),0.18); }
 .unit-box.hidden-search { opacity: 0.18; pointer-events: none; }
 
 .unit-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
@@ -335,6 +347,74 @@ textarea { resize: vertical; min-height: 65px; }
 .panel-financeiro { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
 .panel-simulador { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg); }
 
+/* ── ABA RESUMO EXECUTIVO ── */
+.panel-resumo { flex: 1; padding: 1.5rem 1.75rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; background: var(--app-bg, var(--surface2)); }
+.resumo-exec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 1100px) { .resumo-exec-grid { grid-template-columns: 1fr; } }
+
+.rx-header, .atd-header { display: flex; align-items: center; gap: 0.9rem; }
+.rx-header-icon, .atd-header-icon { width: 42px; height: 42px; border-radius: 10px; background: var(--proj-primaria); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+.rx-header h2, .atd-header h2 { font-size: 1.4rem; font-weight: 700; color: var(--text); margin: 0; }
+.rx-header p, .atd-header p { font-size: 0.85rem; color: var(--text-muted); margin: 0.15rem 0 0; }
+
+.kpiv2-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+@media (max-width: 1300px) { .kpiv2-row { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 800px) { .kpiv2-row { grid-template-columns: repeat(2, 1fr); } }
+.kpiv2-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.35rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.kpiv2-head { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.7rem; }
+.kpiv2-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; }
+.kpiv2-icon-green { background: #16A34A; }
+.kpiv2-icon-blue  { background: #2563EB; }
+.kpiv2-icon-amber { background: #D97706; }
+.kpiv2-icon-red   { background: #DC2626; }
+.kpiv2-icon-purple{ background: #7C3AED; }
+.kpiv2-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.kpiv2-sub { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.35rem; }
+.kpiv2-value { font-size: 1.55rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+.kpiv2-caption { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.3rem; }
+
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.4rem 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.chart-card-head { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.9rem; }
+.chart-card-head i { color: var(--proj-primaria); }
+.chart-card-title { text-align: center; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+.chart-canvas-wrap { position: relative; height: 260px; }
+.chart-legend { display: flex; justify-content: center; gap: 1.25rem; flex-wrap: wrap; margin-top: 0.75rem; }
+.chart-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text); }
+.chart-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+.section-title-lg { font-size: 1.15rem; font-weight: 700; color: var(--text); margin: 0.25rem 0 -0.5rem; }
+
+.raiox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+@media (max-width: 1100px) { .raiox-grid { grid-template-columns: 1fr; } }
+.raiox-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.raiox-head { display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.9rem; }
+.raiox-head-purple { color: #7C3AED; }
+.raiox-head-green { color: #16A34A; }
+.raiox-head-amber { color: #D97706; }
+.raiox-item { display: flex; align-items: center; gap: 0.55rem; font-size: 0.82rem; color: var(--text); margin-bottom: 0.65rem; }
+.raiox-item:last-child { margin-bottom: 0; }
+.raiox-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.raiox-item b { font-weight: 600; }
+.raiox-item span.raiox-count { color: var(--text-muted); }
+
+/* ── ABA ATENDIMENTOS ── */
+.panel-atendimentos { flex: 1; padding: 1.5rem 1.75rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; background: var(--app-bg, var(--surface2)); }
+.atd-filtros { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.atd-filtro-grupo { display: flex; flex-direction: column; gap: 0.3rem; }
+.atd-filtro-grupo label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--bege-dk); letter-spacing: 0.05em; }
+.atd-filtro-grupo input, .atd-filtro-grupo select { padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface2); color: var(--text); font-size: 0.8rem; min-width: 140px; }
+.atd-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+.btn-csv { background: #16A34A; color: #fff; border: 1px solid #16A34A; }
+.btn-csv:hover { background: #15803D; }
+.atd-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: auto; max-height: 560px; }
+.atd-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.atd-table th { position: sticky; top: 0; background: var(--surface2); text-align: left; padding: 0.6rem 0.75rem; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
+.atd-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
+.atd-table tr:last-child td { border-bottom: none; }
+.atd-table tr:hover td { background: var(--surface2); }
+.atd-vazio { text-align: center; padding: 3rem; color: var(--text-muted); }
+.atd-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.68rem; font-weight: 600; background: var(--surface2); color: var(--proj-primaria); border: 1px solid var(--border); }
+
 .filter-bar { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
 .filter-options { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
 .filter-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--bege-dk); letter-spacing: 0.05em; flex-shrink: 0; }
@@ -351,7 +431,7 @@ textarea { resize: vertical; min-height: 65px; }
 #tabelaFluxoCompilado th { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface2); white-space: nowrap; font-weight: 500; }
 #tabelaFluxoCompilado td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
 #tabelaFluxoCompilado tbody tr:last-child td { border-bottom: none; }
-#tabelaFluxoCompilado tbody tr:hover td { background: rgba(0,176,185,0.05); }
+#tabelaFluxoCompilado tbody tr:hover td { background: rgba(var(--proj-primaria-rgb),0.05); }
 
 .rel-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; gap: 1rem; }
 .rel-header-top { display: flex; align-items: center; gap: 0.6rem; }
@@ -579,8 +659,14 @@ textarea { resize: vertical; min-height: 65px; }
       <button class="tab-btn active" onclick="switchTab('espelho', event)">
         <i class="ti ti-layout-dashboard"></i>Espelho de Vendas
       </button>
+      <button class="tab-btn" onclick="switchTab('resumo', event)">
+        <i class="ti ti-chart-pie"></i>Resumo Executivo
+      </button>
       <button class="tab-btn" onclick="switchTab('financeiro', event)">
         <i class="ti ti-chart-bar"></i>Controle Financeiro
+      </button>
+      <button class="tab-btn" onclick="switchTab('atendimentos', event)">
+        <i class="ti ti-headset"></i>Atendimentos
       </button>
       <button class="tab-btn" onclick="switchTab('simulador', event)">
         <i class="ti ti-calculator"></i>Simulador Comercial
@@ -603,7 +689,7 @@ textarea { resize: vertical; min-height: 65px; }
 
     <div class="search-bar">
       <i class="ti ti-search"></i>
-      <input type="text" id="searchInput" placeholder="Buscar unidade ou cliente..." oninput="filtrarEspelho(this.value)">
+      <input type="text" id="searchInput" placeholder="Buscar unidade ou cliente..." oninput="filtrarEspelhoDebounced(this.value)">
     </div>
 
     <div class="kpis-grid">
@@ -669,6 +755,82 @@ textarea { resize: vertical; min-height: 65px; }
   </div>
 </div>
 
+<!-- ABA RESUMO EXECUTIVO -->
+<div id="tab-resumo" class="tab-content">
+  <div class="panel-resumo">
+    <div class="rx-header">
+      <div class="rx-header-icon"><i class="ti ti-layout-grid"></i></div>
+      <div>
+        <h2>Panorama de Estoque</h2>
+        <p id="rxSubtitulo">Visão geral do empreendimento</p>
+      </div>
+    </div>
+
+    <div class="kpiv2-row">
+      <div class="kpiv2-card">
+        <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-green"><i class="ti ti-target-arrow"></i></div><span class="kpiv2-title">Atingimento Global</span></div>
+        <div class="kpiv2-sub">Total do Projeto</div>
+        <div class="kpiv2-value" id="rxPctAtingimento">0%</div>
+        <div class="kpiv2-caption" id="rxAtingimentoCaption">0 de 0 unidades</div>
+      </div>
+      <div class="kpiv2-card">
+        <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-blue"><i class="ti ti-chart-line"></i></div><span class="kpiv2-title">VGV Vendido</span></div>
+        <div class="kpiv2-sub">Volume Geral de Vendas</div>
+        <div class="kpiv2-value" id="rxVgvVendido">R$ 0</div>
+        <div class="kpiv2-caption">Total acumulado</div>
+      </div>
+      <div class="kpiv2-card">
+        <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-amber"><i class="ti ti-cash"></i></div><span class="kpiv2-title">VGV Vendido no Mês</span></div>
+        <div class="kpiv2-sub">Volume Mensal</div>
+        <div class="kpiv2-value" id="rxVgvMes">R$ 0</div>
+        <div class="kpiv2-caption" id="rxMesAtualLabel">No mês atual</div>
+      </div>
+      <div class="kpiv2-card">
+        <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-green"><i class="ti ti-circle-check"></i></div><span class="kpiv2-title">Unidades Vendidas</span></div>
+        <div class="kpiv2-sub">Total comercializado</div>
+        <div class="kpiv2-value" id="rxCountVendido">0 unidades</div>
+        <div class="kpiv2-caption">Contratos assinados</div>
+      </div>
+      <div class="kpiv2-card">
+        <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-red"><i class="ti ti-package"></i></div><span class="kpiv2-title">Em Estoque</span></div>
+        <div class="kpiv2-sub">Disponíveis para venda</div>
+        <div class="kpiv2-value" id="rxEstoqueDisponivel">0 unidades</div>
+        <div class="kpiv2-caption" id="rxEstoqueCaption">De 0 unidades totais</div>
+      </div>
+    </div>
+
+    <div class="resumo-exec-grid">
+      <div class="chart-card">
+        <div class="chart-card-head"><i class="ti ti-chart-donut-2"></i> Vendas por Torre</div>
+        <div class="chart-card-title" id="rxTorreChartTitulo">Vendas por Torre</div>
+        <div class="chart-canvas-wrap"><canvas id="rxChartTorre"></canvas></div>
+        <div class="chart-legend" id="rxLegendaTorre"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head"><i class="ti ti-chart-bar"></i> Origem das Vendas</div>
+        <div class="chart-card-title" id="rxOrigemChartTitulo">Origem das Vendas</div>
+        <div class="chart-canvas-wrap"><canvas id="rxChartOrigem"></canvas></div>
+      </div>
+    </div>
+
+    <h3 class="section-title-lg" id="rxRaioXTitulo">Raio-X das Vendas</h3>
+    <div class="raiox-grid">
+      <div class="raiox-card">
+        <div class="raiox-head raiox-head-purple"><i class="ti ti-building-skyscraper"></i> Por Torre</div>
+        <div id="rxRaioTorre"></div>
+      </div>
+      <div class="raiox-card">
+        <div class="raiox-head raiox-head-green"><i class="ti ti-ruler-2"></i> Por Metragem</div>
+        <div id="rxRaioTipo"></div>
+      </div>
+      <div class="raiox-card">
+        <div class="raiox-head raiox-head-amber"><i class="ti ti-tag"></i> Por Origem</div>
+        <div id="rxRaioOrigem"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ABA FINANCEIRO -->
 <div id="tab-financeiro" class="tab-content">
   <div class="panel-financeiro">
@@ -701,6 +863,75 @@ textarea { resize: vertical; min-height: 65px; }
       <table id="tabelaFluxoCompilado">
         <thead></thead>
         <tbody id="corpoFluxoCompilado"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ABA ATENDIMENTOS -->
+<div id="tab-atendimentos" class="tab-content">
+  <div class="panel-atendimentos">
+    <div class="atd-header">
+      <div class="atd-header-icon"><i class="ti ti-clipboard-check"></i></div>
+      <div>
+        <h2>Controle de Atendimentos</h2>
+        <p>Gestão completa de visitas e atendimentos comerciais</p>
+      </div>
+    </div>
+
+    <div class="atd-filtros">
+      <div class="atd-filtro-grupo">
+        <label>Data Início</label>
+        <input type="date" id="atdFiltroDe" onchange="renderAtendimentos()">
+      </div>
+      <div class="atd-filtro-grupo">
+        <label>Data Fim</label>
+        <input type="date" id="atdFiltroAte" onchange="renderAtendimentos()">
+      </div>
+      <div class="atd-filtro-grupo">
+        <label>Empresa</label>
+        <select id="atdFiltroEmpresa" onchange="renderAtendimentos()"><option value="">Todas as Empresas</option></select>
+      </div>
+      <div class="atd-filtro-grupo">
+        <label>Tipo de Visita</label>
+        <select id="atdFiltroTipo" onchange="renderAtendimentos()"><option value="">Todos os Tipos</option></select>
+      </div>
+      <div class="atd-filtro-grupo">
+        <label>Mídia</label>
+        <select id="atdFiltroMidia" onchange="renderAtendimentos()"><option value="">Todas as Mídias</option></select>
+      </div>
+      <div class="atd-filtro-grupo" style="flex:1; min-width:180px;">
+        <label>Buscar Nome/Corretor</label>
+        <input type="text" id="atdFiltroBusca" placeholder="Digite para buscar..." oninput="renderAtendimentosDebounced()">
+      </div>
+      <button class="btn btn-sec btn-sm" onclick="limparFiltrosAtendimentos()"><i class="ti ti-filter-off"></i> Limpar</button>
+      <button class="btn btn-gold btn-sm" onclick="carregarAtendimentos(true)"><i class="ti ti-refresh"></i> Atualizar</button>
+      <button class="btn btn-csv btn-sm" onclick="exportarAtendimentosCSV()"><i class="ti ti-download"></i> CSV</button>
+    </div>
+
+    <div class="atd-kpis" id="atdKpisRow"></div>
+
+    <div class="resumo-exec-grid">
+      <div class="chart-card">
+        <div class="chart-card-head"><i class="ti ti-chart-donut-2"></i> Atendimentos por Empresa</div>
+        <div class="chart-canvas-wrap"><canvas id="atdChartEmpresa"></canvas></div>
+        <div class="chart-legend" id="atdLegendaEmpresa"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head"><i class="ti ti-chart-bar"></i> Atendimentos por Tipo</div>
+        <div class="chart-canvas-wrap"><canvas id="atdChartTipo"></canvas></div>
+      </div>
+    </div>
+
+    <div class="atd-table-wrap">
+      <table class="atd-table">
+        <thead>
+          <tr>
+            <th>Data</th><th>Nome</th><th>Telefone</th><th>Tipo de Visita</th><th>Mídia</th>
+            <th>Corretor de Atendimento</th><th>Gerente</th><th>Empresa</th><th>Observação</th>
+          </tr>
+        </thead>
+        <tbody id="atdTbody"><tr><td colspan="9" class="atd-vazio">Carregando atendimentos...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -950,6 +1181,17 @@ textarea { resize: vertical; min-height: 65px; }
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
+//  UTIL — debounce (evita re-render/recriação de gráfico a cada tecla digitada)
+// ═══════════════════════════════════════════════════════════════════
+function debounce(fn, wait) {
+  let timer = null;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), wait === undefined ? 250 : wait);
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
 //  ÁRVORES DE UNIDADES — dados reais de cada projeto
 // ═══════════════════════════════════════════════════════════════════
 function buildTorresLorenaTree() {
@@ -965,6 +1207,7 @@ function buildTorresLorenaTree() {
       status_espelho: "DISPONIVEL",
       cliente_nome: "",
       observacoes: "",
+      origem_venda: "",
       fase_esteira: 1,
       fluxo_financeiro: []
     });
@@ -1036,7 +1279,7 @@ function buildJesuinoTree() {
   function add(id, andar, final, metragem, tipo){
     list.push({ id_unidade:id, numero_unidade:id, torre:null, andar, final, metragem, vagas:null,
       valor_tabela:null, tipo, especial:null, status_espelho:"DISPONIVEL", cliente_nome:"",
-      observacoes:"", fase_esteira:1, fluxo_financeiro:[] });
+      observacoes:"", origem_venda:"", fase_esteira:1, fluxo_financeiro:[] });
   }
   add("21", 2, 1, 478, "Garden");
   for (let a = 3; a <= 27; a++) add(`${a}1`, a, 1, 387, "Tipo");
@@ -1099,6 +1342,7 @@ const PROJECTS = {
     metaTorres: '3 torres',
     metaEntrega: 'Entrega 08/2028',
     googleScriptUrl: "https://script.google.com/macros/s/AKfycbwvtfIsqxuzVtNuCr0_9Otx-E29GGj5i_-qTwr9gpajhWHCS6Ja4WmNLacdGD6bU7Q18w/exec",
+    atendimentosScriptUrl: "https://script.google.com/macros/s/AKfycbxEuutfv1KyAzLyp9CiqY0uZsauOhZtH90j8_uirvwyN9wsFx1SQ0cuMYG3UBJlY9nS/exec",
     torres: ['Parque', 'Europa', 'Jardins'],
     exportPrefix: 'Quaddra_Lorena',
     buildUnits: buildTorresLorenaTree,
@@ -1145,6 +1389,7 @@ const PROJECTS = {
     metaTorres: 'Entrega editável',
     metaEntrega: 'Previsão 06/2030',
     googleScriptUrl: "https://script.google.com/macros/s/AKfycbzYtg8Mwk-gZl31--ZKCcg3HyijAJzd8REFsGB34ffX3LcGV2ZRS0vCTROqIvYTD9tK/exec",
+    atendimentosScriptUrl: "https://script.google.com/macros/s/AKfycbxuL1M82Z9D2JLMmkl4IvECgvK5l2fJ72RFLMb711omrTvHxybZ7Wea10_zLdb2duSj/exec",
     torres: null,
     exportPrefix: 'Quaddra_Jesuino',
     buildUnits: buildJesuinoTree,
@@ -1267,11 +1512,21 @@ function montarCardsSelecao() {
   `).join('');
 }
 
+// "#RRGGBB" -> "r,g,b" (pra usar em rgba(var(--proj-primaria-rgb), 0.1) no CSS,
+// já que CSS não faz rgba() direto a partir de uma var() com valor hex).
+function hexParaRgbCsv(hex) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || '');
+  if (!m) return '0,0,0';
+  return [1, 2, 3].map(i => parseInt(m[i], 16)).join(',');
+}
+
 function selecionarProjeto(key) {
   PROJETO_ATIVO = PROJECTS[key];
   document.documentElement.style.setProperty('--proj-primaria', PROJETO_ATIVO.corPrimaria);
   document.documentElement.style.setProperty('--proj-primaria-escura', PROJETO_ATIVO.corPrimariaEscura);
   document.documentElement.style.setProperty('--proj-acento', PROJETO_ATIVO.corAcento);
+  document.documentElement.style.setProperty('--proj-primaria-rgb', hexParaRgbCsv(PROJETO_ATIVO.corPrimaria));
+  RX_PALETA = gerarPaletaTema(PROJETO_ATIVO.corPrimaria);
   document.getElementById('appHeaderTitulo').textContent = PROJETO_ATIVO.nome;
   document.getElementById('projTitle').textContent = PROJETO_ATIVO.nome + ' — Proposta de Pagamento';
   document.title = PROJETO_ATIVO.nome + ' · Backoffice Diretoria';
@@ -1287,6 +1542,8 @@ function selecionarProjeto(key) {
   renderKPIs();
   window.montarCamposSimulador(); // monta campos do simulador, LISTA_UNIDADES_SIM, populateUnidadeSelect, refreshUnidadeInfo e render()
   carregarDados();
+  atendimentosData = [];
+  atendimentosCarregadoPara = null;
 }
 
 function voltarSelecao() {
@@ -1318,8 +1575,8 @@ function montarTorreSwitch(){
 // ═══════════════════════════════════════════════════════════════════
 const STATUS_CONFIG = {
   DISPONIVEL:       { label: "Disponível",        color: "#9CA3AF" },
-  PROPOSTA:         { label: "Proposta",           color: "#4ADE80" },
-  PROCESSO:         { label: "Em Processo",        color: "#22C55E" },
+  PROPOSTA:         { label: "Proposta",           color: "#8B5CF6" },
+  PROCESSO:         { label: "Em Processo",        color: "#EC4899" },
   RESERVA_VENDA:    { label: "Reserva Venda",      color: "#F59E0B" },
   CONTRATO_ENVIADO: { label: "Contrato Enviado",   color: "#3B82F6" },
   CV_ASSINADO:      { label: "CV Assinado",        color: "#15803D" },
@@ -1334,6 +1591,9 @@ const FASES = [
   "Proposta em Análise", "Aprovada Comercial / Diretoria", "Análise de Crédito / Compliance",
   "Confecção de Contrato / Jurídico", "Em Assinatura (Coleta)", "Contrato Assinado & Ativo"
 ];
+// Lista alinhada aos valores reais encontrados na planilha "PIPE TRATATIVAS" do Lorena
+// (a lista do dashboard antigo era só uma aproximação — a planilha real tem mais categorias).
+const ORIGENS_VENDA = ["Online", "Diretoria", "Carteira", "Carteira (Parcerias)", "Homesphere", "Store", "Vez", "Lead Próprio"];
 
 // ═══════════════════════════════════════════════════════════════════
 //  ESTADO GLOBAL
@@ -1345,6 +1605,8 @@ var esconderUnidades = false;
 var torreAtiva = 'Todas';
 var filtroStatusAtivo = null;
 var LISTA_UNIDADES_SIM = [];
+var atendimentosData = [];
+var atendimentosCarregadoPara = null; // guarda o key do projeto já carregado, pra não recarregar à toa
 
 // ═══════════════════════════════════════════════════════════════════
 //  TRATAMENTO DE DATA / FORMATAÇÃO / TOAST / NAVEGAÇÃO
@@ -1405,6 +1667,185 @@ function switchTab(tabName, event) {
   document.getElementById('tab-' + tabName).classList.add('active');
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
   if (tabName === 'financeiro') renderFinanceiro();
+  if (tabName === 'resumo') renderResumoExecutivo();
+  if (tabName === 'atendimentos') carregarAtendimentos();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ABA RESUMO EXECUTIVO
+// ═══════════════════════════════════════════════════════════════════
+// Paleta dos gráficos (Resumo Executivo + Atendimentos) — antes era uma paleta genérica
+// fixa (estilo Tailwind), igual pros dois Quaddras. Agora é gerada a partir da cor de
+// marca do projeto ativo (girando o matiz em 8 passos de 45°), pra cada projeto ter uma
+// família de cores de gráfico visivelmente sua, e não a mesma cara nos dois temas.
+function hexParaHsl_(hex) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || '');
+  if (!m) return [200, 60, 50];
+  const r = parseInt(m[1],16)/255, g = parseInt(m[2],16)/255, b = parseInt(m[3],16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s; const l = (max+min)/2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    if (max === r) h = (g-b)/d + (g<b?6:0);
+    else if (max === g) h = (b-r)/d + 2;
+    else h = (r-g)/d + 4;
+    h /= 6;
+  }
+  return [h*360, s*100, l*100];
+}
+function hslParaHex_(h, s, l) {
+  h/=360; s/=100; l/=100;
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p,q,t) => { if(t<0)t+=1; if(t>1)t-=1; if(t<1/6) return p+(q-p)*6*t; if(t<1/2) return q; if(t<2/3) return p+(q-p)*(2/3-t)*6; return p; };
+    const q = l < 0.5 ? l*(1+s) : l+s-l*s;
+    const p = 2*l-q;
+    r = hue2rgb(p,q,h+1/3); g = hue2rgb(p,q,h); b = hue2rgb(p,q,h-1/3);
+  }
+  const toHex = x => Math.round(x*255).toString(16).padStart(2,'0');
+  return '#'+toHex(r)+toHex(g)+toHex(b);
+}
+function gerarPaletaTema(corBase) {
+  const [h, s] = hexParaHsl_(corBase);
+  const satAlvo = Math.max(s, 55); // garante cor viva o bastante pro gráfico mesmo se a cor de marca for escura/dessaturada
+  const passos = [0, 45, 90, 135, 180, 225, 270, 315];
+  return passos.map(delta => hslParaHex_((h + delta) % 360, satAlvo, 50));
+}
+let RX_PALETA = gerarPaletaTema('#00B0B9'); // default até selecionarProjeto() trocar pelo tema ativo
+var rxChartTorreObj = null, rxChartOrigemObj = null;
+
+// Preço de tabela por unidade, independente de o projeto guardar o valor pronto (Lorena, via valor_tabela)
+// ou uma tabela de preço por m² (Jesuíno, via pricingTable — usa o valor de "lançamento" x metragem).
+function resolverValorTabela(u) {
+  if (u.valor_tabela) return u.valor_tabela;
+  const tabela = PROJETO_ATIVO && PROJETO_ATIVO.pricingTable;
+  if (tabela) {
+    const linha = tabela.find(r => String(r.u) === String(u.id_unidade));
+    // Usa a metragem PRECISA da própria tabela de preços (linha.m), não a metragem
+    // arredondada/uniforme por andar-tipo da árvore de unidades (u.metragem) — essa
+    // última é igual para várias unidades (ex: 387m² pra todo "Tipo") e sub/superestimava
+    // o VGV potencial em até ~R$400 mil por unidade.
+    if (linha) return (linha.lanc || linha.pre || 0) * (linha.m || 0);
+  }
+  return 0;
+}
+
+// Mês/ano (chave "MM/yyyy") da 1ª parcela de uma unidade — usado para atribuir o VGV
+// total da unidade ao mês em que a venda "entra" (ex.: ato previsto pra 08/2026 = venda de agosto).
+function mesDaPrimeiraParcela(u) {
+  let menor = null;
+  u.fluxo_financeiro.forEach(f => {
+    if (!f.data_vencimento || !/^\d{2}\/\d{4}$/.test(f.data_vencimento)) return;
+    const [mm, yyyy] = f.data_vencimento.split('/').map(Number);
+    const chave = yyyy * 12 + mm;
+    if (menor === null || chave < menor.chave) menor = { chave, str: f.data_vencimento };
+  });
+  return menor ? menor.str : null;
+}
+
+function renderResumoExecutivo() {
+  if (!units || !units.length) return;
+
+  const vgvDe = u => u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+  const hoje = new Date();
+  const mesAtualStr = String(hoje.getMonth() + 1).padStart(2, '0') + '/' + hoje.getFullYear();
+  const nomesMes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  let vgvVendido = 0, cVendido = 0, vgvMes = 0;
+  let vgvTotal = 0;
+  let vgvPotencial = 0, cDisponivel = 0;
+  const totalUnidades = units.length;
+
+  const porTorre = {};    // torre -> {total, vendidas}
+  const porTipo  = {};    // tipo  -> {total, vendidas}
+  const porOrigem = {};   // origem_venda -> count (só unidades vendidas)
+
+  units.forEach(u => {
+    const valorRef = resolverValorTabela(u) || vgvDe(u) || 0;
+    vgvTotal += valorRef;
+
+    const torreKey = u.torre || 'Único';
+    const tipoKey  = u.tipo || 'Não informado';
+    if (!porTorre[torreKey]) porTorre[torreKey] = { total: 0, vendidas: 0 };
+    if (!porTipo[tipoKey])   porTipo[tipoKey]  = { total: 0, vendidas: 0 };
+    porTorre[torreKey].total++;
+    porTipo[tipoKey].total++;
+
+    if (u.status_espelho === 'CV_ASSINADO') {
+      const vgvUnidade = vgvDe(u);
+      vgvVendido += vgvUnidade;
+      cVendido++;
+      porTorre[torreKey].vendidas++;
+      porTipo[tipoKey].vendidas++;
+      const origemKey = u.origem_venda || 'Não informada';
+      porOrigem[origemKey] = (porOrigem[origemKey] || 0) + 1;
+      // VGV "vendido no mês": mês da 1ª parcela (ato) da unidade cai no mês atual -> conta o VGV total dela.
+      if (mesDaPrimeiraParcela(u) === mesAtualStr) vgvMes += vgvUnidade;
+    } else if (u.status_espelho === 'DISPONIVEL') {
+      vgvPotencial += valorRef;
+      cDisponivel++;
+    }
+  });
+
+  // Atingimento Global = % de unidades vendidas sobre o total (não é uma razão financeira/VGV).
+  const pctAtingimento = totalUnidades > 0 ? Math.round((cVendido / totalUnidades) * 100) : 0;
+
+  document.getElementById('rxSubtitulo').textContent = 'Status Global ' + (PROJETO_ATIVO ? PROJETO_ATIVO.nome : '');
+  document.getElementById('rxPctAtingimento').textContent = `${pctAtingimento}%`;
+  document.getElementById('rxAtingimentoCaption').textContent = `${cVendido} de ${totalUnidades} unidades`;
+  document.getElementById('rxVgvVendido').textContent = fmtBRL(vgvVendido);
+  document.getElementById('rxVgvMes').textContent = fmtBRL(vgvMes);
+  document.getElementById('rxMesAtualLabel').textContent = `Unidades com 1ª parcela em ${nomesMes[hoje.getMonth()]}/${hoje.getFullYear()}`;
+  document.getElementById('rxCountVendido').textContent = `${cVendido} unidades`;
+  document.getElementById('rxEstoqueDisponivel').textContent = `${cDisponivel} unidades`;
+  document.getElementById('rxEstoqueCaption').textContent = `De ${totalUnidades} unidades totais · VGV potencial ${fmtBRL(vgvPotencial)}`;
+
+  const temTorres = PROJETO_ATIVO && PROJETO_ATIVO.torres && PROJETO_ATIVO.torres.length > 1;
+  const tituloTorre = temTorres ? 'Vendas por Torre' : 'Vendas por Empreendimento';
+  document.getElementById('rxTorreChartTitulo').textContent = `${tituloTorre} (${cVendido} Unidades)`;
+  document.getElementById('rxOrigemChartTitulo').textContent = `Origem das Vendas (${cVendido} Unidades)`;
+  document.getElementById('rxRaioXTitulo').textContent = `Raio-X das Vendas (${cVendido} unidades)`;
+
+  // ── Gráfico donut: vendas por torre ──
+  const chavesTorre = Object.keys(porTorre).sort((a, b) => porTorre[b].vendidas - porTorre[a].vendidas);
+  const coresTorre = chavesTorre.map((_, i) => RX_PALETA[i % RX_PALETA.length]);
+  if (typeof Chart !== 'undefined') {
+    if (rxChartTorreObj) rxChartTorreObj.destroy();
+    rxChartTorreObj = new Chart(document.getElementById('rxChartTorre'), {
+      type: 'doughnut',
+      data: { labels: chavesTorre, datasets: [{ data: chavesTorre.map(k => porTorre[k].vendidas), backgroundColor: coresTorre, borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '60%' }
+    });
+  }
+  document.getElementById('rxLegendaTorre').innerHTML = chavesTorre.map((k, i) =>
+    `<div class="chart-legend-item"><span class="chart-legend-dot" style="background:${coresTorre[i]}"></span>${k}</div>`).join('');
+
+  // ── Gráfico de barras: origem das vendas ──
+  const chavesOrigem = Object.keys(porOrigem).sort((a, b) => porOrigem[b] - porOrigem[a]);
+  const coresOrigem = chavesOrigem.map((_, i) => RX_PALETA[i % RX_PALETA.length]);
+  if (typeof Chart !== 'undefined') {
+    if (rxChartOrigemObj) rxChartOrigemObj.destroy();
+    rxChartOrigemObj = new Chart(document.getElementById('rxChartOrigem'), {
+      type: 'bar',
+      data: { labels: chavesOrigem, datasets: [{ label: 'Unidades Vendidas', data: chavesOrigem.map(k => porOrigem[k]), backgroundColor: coresOrigem, borderRadius: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Unidades' }, ticks: { precision: 0 } } } }
+    });
+  }
+
+  // ── Raio-X: Por Torre / Por Metragem (com denominador) e Por Origem (sem denominador) ──
+  const renderRaio = (obj, cor) => Object.keys(obj).sort((a, b) => obj[b].vendidas - obj[a].vendidas).map(k =>
+    `<div class="raiox-item"><span class="raiox-dot" style="background:${cor}"></span><b>${k}:</b> ${obj[k].vendidas} unidades <span class="raiox-count">(de ${obj[k].total})</span></div>`).join('')
+    || '<div class="raiox-item" style="color:var(--text-muted)">Nenhuma venda registrada.</div>';
+
+  document.getElementById('rxRaioTorre').innerHTML = renderRaio(porTorre, '#7C3AED');
+  document.getElementById('rxRaioTipo').innerHTML = renderRaio(porTipo, '#16A34A');
+
+  document.getElementById('rxRaioOrigem').innerHTML = chavesOrigem.map((k, i) =>
+    `<div class="raiox-item"><span class="raiox-dot" style="background:${coresOrigem[i]}"></span><b>${k}:</b> ${porOrigem[k]} unidades</div>`
+  ).join('') || '<div class="raiox-item" style="color:var(--text-muted)">Nenhuma venda registrada.</div>';
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1430,6 +1871,7 @@ function filtrarEspelho(q) {
   aplicarFiltros();
   if (!filtroStatusAtivo) renderRelatorioFiltro();
 }
+const filtrarEspelhoDebounced = debounce(filtrarEspelho, 200);
 function aplicarFiltros() {
   const q        = (document.getElementById('searchInput').value || '').trim().toLowerCase();
   const stFiltro = filtroStatusAtivo;
@@ -1734,6 +2176,13 @@ function renderGaveta(id) {
         <input type="text" id="editCliente" value="${u.cliente_nome || ''}" placeholder="Nome do proponente" onchange="window.updateClienteLocal(this.value)">
       </div>
       <div class="form-group">
+        <label>Origem da Venda</label>
+        <select id="editOrigemVenda" onchange="window.updateOrigemVendaLocal(this.value)">
+          <option value="">Não informada</option>
+          ${ORIGENS_VENDA.map(o => `<option value="${o}" ${u.origem_venda === o ? 'selected' : ''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
         <label>Observações</label>
         <textarea id="editObservacoes" placeholder="Anotações estratégicas sobre a negociação..." onchange="window.updateObservacoesLocal(this.value)">${u.observacoes || ''}</textarea>
       </div>
@@ -1793,6 +2242,10 @@ window.updateClienteLocal = function(val) {
   const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
   if (u) { u.cliente_nome = val; renderEspelho(); }
 };
+window.updateOrigemVendaLocal = function(val) {
+  const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
+  if (u) u.origem_venda = val;
+};
 window.updateObservacoesLocal = function(val) {
   const u = units.find(x => String(x.id_unidade) === String(selectedUnitId));
   if (u) u.observacoes = val;
@@ -1847,17 +2300,32 @@ window.salvarUnidadeData = async function(id) {
   const payload = {
     action: "updateUnit", id_unidade: String(u.id_unidade), id_torre: u.torre || undefined,
     status_espelho: u.status_espelho, cliente_nome: u.cliente_nome, observacoes: u.observacoes || "",
+    origem_venda: u.origem_venda || "",
     fase_esteira: String(u.fase_esteira), fluxo_financeiro: fluxoFormatado
   };
   setSyncStatus('loading', 'Enviando dados...');
   try {
-    await fetch(url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    // Sem mode:"no-cors" (que antes deixava a resposta opaca/ilegível e fazia o app
+    // sempre mostrar "sucesso", mesmo quando a gravação falhava no Apps Script).
+    // Content-Type text/plain evita o preflight CORS que o Apps Script não responde
+    // (mesmo motivo documentado no login, mais acima) — o doPost() lê e faz JSON.parse
+    // de e.postData.contents normalmente, independente do Content-Type declarado.
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    let data = null;
+    try { data = await resp.json(); } catch (_) { /* resposta não veio em JSON válido */ }
+    if (!resp.ok || !data || data.status !== "success") {
+      throw new Error('Resposta inesperada do Apps Script ao salvar: ' + JSON.stringify(data));
+    }
     showToast(`Unidade ${id} enviada com sucesso!`, 'success');
     setTimeout(() => carregarDados(), 1500);
   } catch (error) {
     console.error(error);
-    showToast("Erro ao conectar com a planilha. Verifique a URL.", 'error');
-    setSyncStatus('offline', 'Erro de conexão');
+    showToast("Não foi possível confirmar a gravação na planilha. A edição pode não ter sido salva — tente novamente.", 'error', 6000);
+    setSyncStatus('offline', 'Erro ao salvar');
     if (btn) { btn.disabled = false; btn.innerHTML = `<i class="ti ti-device-floppy"></i> Salvar na Planilha`; }
   }
 };
@@ -1889,6 +2357,7 @@ async function carregarDados() {
         u.status_espelho = c.status_espelho || "DISPONIVEL";
         u.cliente_nome   = c.cliente_nome   || "";
         u.observacoes    = c.observacoes    || "";
+        u.origem_venda   = c.origem_venda   || "";
         u.fase_esteira   = parseInt(c.fase_esteira) || 1;
         const fluxoBruto = c.fluxo_financeiro || c.fluxo || [];
         u.fluxo_financeiro = Array.isArray(fluxoBruto)
@@ -1905,7 +2374,7 @@ async function carregarDados() {
       setSyncStatus('offline', 'Resposta inesperada');
     }
     units = tree;
-    renderEspelho(); renderKPIs(); renderFinanceiro();
+    renderEspelho(); renderKPIs(); renderFinanceiro(); renderResumoExecutivo();
     window.populateUnidadeSelect();
     if (selectedUnitId) renderGaveta(selectedUnitId);
   } catch (err) {
@@ -1915,6 +2384,244 @@ async function carregarDados() {
     setSyncStatus('offline', 'Sem conexão — modo local');
     showToast('Não foi possível conectar à planilha. Rodando em modo local.', 'error');
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ABA ATENDIMENTOS
+// ═══════════════════════════════════════════════════════════════════
+function parseDataAtendimento(s) {
+  // Aceita "dd/MM/yyyy", "yyyy-MM-dd" ou o toString() cru de uma Date do Apps Script.
+  if (!s) return null;
+  let str = String(s).trim();
+  if (str.length > 15 && (str.includes("GMT") || /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(str))) {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const [y, m, d] = str.split('T')[0].split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+    const [d, m, y] = str.split('/').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  const tentativa = new Date(str);
+  return isNaN(tentativa.getTime()) ? null : tentativa;
+}
+function fmtDataAtendimento(d) {
+  if (!d) return '—';
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+}
+
+// Última semana completa (segunda a domingo, sem contar a semana atual, ainda em curso).
+// Ex.: hoje quinta 23/07/2026 -> retorna 13/07 a 19/07 (a semana cheia anterior).
+function getUltimaSemanaCompleta() {
+  const hoje = new Date();
+  const diaSemana = hoje.getDay(); // 0=domingo .. 6=sábado
+  const diasDesdeSegundaAtual = (diaSemana + 6) % 7; // segunda-feira desta semana = offset 0
+  const segundaAtual = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - diasDesdeSegundaAtual);
+  const domingoPassado = new Date(segundaAtual); domingoPassado.setDate(segundaAtual.getDate() - 1);
+  const segundaPassada = new Date(domingoPassado); segundaPassada.setDate(domingoPassado.getDate() - 6);
+  const toISO = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return { de: toISO(segundaPassada), ate: toISO(domingoPassado) };
+}
+function aplicarFiltroSemanaPadrao() {
+  const { de, ate } = getUltimaSemanaCompleta();
+  document.getElementById('atdFiltroDe').value = de;
+  document.getElementById('atdFiltroAte').value = ate;
+}
+
+async function carregarAtendimentos(forcar) {
+  const url = PROJETO_ATIVO.atendimentosScriptUrl;
+  const tbody = document.getElementById('atdTbody');
+  if (!document.getElementById('atdFiltroDe').value && !document.getElementById('atdFiltroAte').value) {
+    aplicarFiltroSemanaPadrao(); // primeira vez que a aba abre: já entra filtrado na última semana completa
+  }
+  if (!url || url.includes('SUA_NOVA_URL')) {
+    tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">Aba de Atendimentos ainda não configurada para ${PROJETO_ATIVO.nome}.<br>Falta publicar o Apps Script da planilha de Atendimentos e informar a URL em <code>atendimentosScriptUrl</code>.</td></tr>`;
+    return;
+  }
+  if (atendimentosCarregadoPara === PROJETO_ATIVO.key && !forcar) {
+    renderAtendimentos();
+    return;
+  }
+  tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">Carregando atendimentos...</td></tr>`;
+  try {
+    const resp = await fetch(url);
+    const result = await resp.json();
+    if (result && result.status === 'success' && Array.isArray(result.data)) {
+      atendimentosData = result.data.map(r => ({
+        data: r.data || r.Data || '',
+        nome: r.nome || r.Nome || '',
+        telefone: r.telefone || r.Telefone || '',
+        email: r.email || r.Email || '',
+        tipo_visita: r.tipo_visita || r['TIPO DE VISITA'] || '',
+        midia: r.midia || r['Mídia'] || r.Midia || '',
+        corretor_origem: r.corretor_origem || r['Corretor origem'] || '',
+        gerente: r.gerente || r.Gerente || '',
+        corretor_atendimento: r.corretor_atendimento || r['Corretor de atendimento'] || '',
+        gerente_atendimento: r.gerente_atendimento || r['Gerente Atendimento'] || '',
+        empresa: r.empresa || r.Empresa || '',
+        observacao: r.observacao || r.Observação || r.Observacao || ''
+      }));
+      atendimentosCarregadoPara = PROJETO_ATIVO.key;
+      montarFiltrosAtendimentos();
+      renderAtendimentos();
+    } else {
+      tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">Resposta inesperada da planilha de atendimentos.</td></tr>`;
+    }
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">Não foi possível conectar à planilha de atendimentos.</td></tr>`;
+  }
+}
+
+var ATD_EMPRESAS_LISTA = [];
+var atdUltimosFiltrados = [];
+var atdChartEmpresaObj = null, atdChartTipoObj = null;
+const ATD_ICONES_EMPRESA = ['ti-building-store', 'ti-home', 'ti-users-group', 'ti-trending-up', 'ti-briefcase', 'ti-building'];
+const ATD_CORES_KPI = ['kpiv2-icon-green', 'kpiv2-icon-amber', 'kpiv2-icon-red', 'kpiv2-icon-blue', 'kpiv2-icon-purple'];
+
+function montarFiltrosAtendimentos() {
+  const tipos = [...new Set(atendimentosData.map(a => a.tipo_visita).filter(Boolean))].sort();
+  const midias = [...new Set(atendimentosData.map(a => a.midia).filter(Boolean))].sort();
+  ATD_EMPRESAS_LISTA = [...new Set(atendimentosData.map(a => a.empresa).filter(Boolean))].sort();
+
+  const selTipo = document.getElementById('atdFiltroTipo');
+  const selMidia = document.getElementById('atdFiltroMidia');
+  const selEmpresa = document.getElementById('atdFiltroEmpresa');
+  const valTipoAtual = selTipo.value, valMidiaAtual = selMidia.value, valEmpresaAtual = selEmpresa.value;
+  selTipo.innerHTML = '<option value="">Todos os Tipos</option>' + tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+  selMidia.innerHTML = '<option value="">Todas as Mídias</option>' + midias.map(m => `<option value="${m}">${m}</option>`).join('');
+  selEmpresa.innerHTML = '<option value="">Todas as Empresas</option>' + ATD_EMPRESAS_LISTA.map(e => `<option value="${e}">${e}</option>`).join('');
+  selTipo.value = tipos.includes(valTipoAtual) ? valTipoAtual : '';
+  selMidia.value = midias.includes(valMidiaAtual) ? valMidiaAtual : '';
+  selEmpresa.value = ATD_EMPRESAS_LISTA.includes(valEmpresaAtual) ? valEmpresaAtual : '';
+}
+
+function limparFiltrosAtendimentos() {
+  aplicarFiltroSemanaPadrao(); // "limpar" volta pro padrão (última semana completa), não pro vazio
+  document.getElementById('atdFiltroTipo').value = '';
+  document.getElementById('atdFiltroMidia').value = '';
+  document.getElementById('atdFiltroEmpresa').value = '';
+  document.getElementById('atdFiltroBusca').value = '';
+  renderAtendimentos();
+}
+
+function renderAtendimentos() {
+  const tbody = document.getElementById('atdTbody');
+  if (!tbody || !atendimentosCarregadoPara) return;
+
+  const de = document.getElementById('atdFiltroDe').value ? new Date(document.getElementById('atdFiltroDe').value + 'T00:00:00') : null;
+  const ate = document.getElementById('atdFiltroAte').value ? new Date(document.getElementById('atdFiltroAte').value + 'T23:59:59') : null;
+  const tipoSel = document.getElementById('atdFiltroTipo').value;
+  const midiaSel = document.getElementById('atdFiltroMidia').value;
+  const empresaSel = document.getElementById('atdFiltroEmpresa').value;
+  const busca = document.getElementById('atdFiltroBusca').value.trim().toLowerCase();
+
+  const comData = atendimentosData.map(a => ({ ...a, _data: parseDataAtendimento(a.data) }));
+  const filtrados = comData.filter(a => {
+    if (de && (!a._data || a._data < de)) return false;
+    if (ate && (!a._data || a._data > ate)) return false;
+    if (tipoSel && a.tipo_visita !== tipoSel) return false;
+    if (midiaSel && a.midia !== midiaSel) return false;
+    if (empresaSel && a.empresa !== empresaSel) return false;
+    if (busca) {
+      const alvo = `${a.nome} ${a.corretor_atendimento} ${a.corretor_origem}`.toLowerCase();
+      if (!alvo.includes(busca)) return false;
+    }
+    return true;
+  }).sort((a, b) => (b._data?.getTime() || 0) - (a._data?.getTime() || 0));
+
+  atdUltimosFiltrados = filtrados;
+
+  // ── KPIs: Total + um card por empresa ──
+  const contPorEmpresa = {};
+  filtrados.forEach(a => { if (a.empresa) contPorEmpresa[a.empresa] = (contPorEmpresa[a.empresa] || 0) + 1; });
+  let kpisHTML = `<div class="kpiv2-card">
+      <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-blue"><i class="ti ti-clipboard-check"></i></div><span class="kpiv2-title">Total</span></div>
+      <div class="kpiv2-value">${filtrados.length}</div>
+      <div class="kpiv2-caption">${(de || ate) ? 'No período selecionado' : 'Todo o período'}</div>
+    </div>`;
+  kpisHTML += ATD_EMPRESAS_LISTA.map((emp, i) => `
+    <div class="kpiv2-card">
+      <div class="kpiv2-head"><div class="kpiv2-icon ${ATD_CORES_KPI[i % ATD_CORES_KPI.length]}"><i class="ti ${ATD_ICONES_EMPRESA[i % ATD_ICONES_EMPRESA.length]}"></i></div><span class="kpiv2-title">${emp}</span></div>
+      <div class="kpiv2-value">${contPorEmpresa[emp] || 0}</div>
+      <div class="kpiv2-caption">Atendimentos de ${emp}</div>
+    </div>`).join('');
+  document.getElementById('atdKpisRow').innerHTML = kpisHTML;
+
+  // ── Gráfico donut: atendimentos por empresa ──
+  const chavesEmpresa = Object.keys(contPorEmpresa).sort((a, b) => contPorEmpresa[b] - contPorEmpresa[a]);
+  const coresEmpresa = chavesEmpresa.map((_, i) => RX_PALETA[i % RX_PALETA.length]);
+  if (typeof Chart !== 'undefined') {
+    if (atdChartEmpresaObj) atdChartEmpresaObj.destroy();
+    atdChartEmpresaObj = new Chart(document.getElementById('atdChartEmpresa'), {
+      type: 'pie',
+      data: { labels: chavesEmpresa, datasets: [{ data: chavesEmpresa.map(k => contPorEmpresa[k]), backgroundColor: coresEmpresa, borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+  }
+  document.getElementById('atdLegendaEmpresa').innerHTML = chavesEmpresa.map((k, i) =>
+    `<div class="chart-legend-item"><span class="chart-legend-dot" style="background:${coresEmpresa[i]}"></span>${k}</div>`).join('');
+
+  // ── Gráfico de barras: atendimentos por tipo ──
+  const contPorTipo = {};
+  filtrados.forEach(a => { if (a.tipo_visita) contPorTipo[a.tipo_visita] = (contPorTipo[a.tipo_visita] || 0) + 1; });
+  const chavesTipo = Object.keys(contPorTipo).sort((a, b) => contPorTipo[b] - contPorTipo[a]);
+  if (typeof Chart !== 'undefined') {
+    if (atdChartTipoObj) atdChartTipoObj.destroy();
+    atdChartTipoObj = new Chart(document.getElementById('atdChartTipo'), {
+      type: 'bar',
+      data: { labels: chavesTipo, datasets: [{ label: 'Atendimentos', data: chavesTipo.map(k => contPorTipo[k]), backgroundColor: '#2563EB', borderRadius: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+
+  if (!filtrados.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">Nenhum atendimento encontrado para os filtros selecionados.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtrados.map(a => `
+    <tr>
+      <td>${fmtDataAtendimento(a._data)}</td>
+      <td>${a.nome || '—'}</td>
+      <td>${a.telefone || '—'}</td>
+      <td>${a.tipo_visita ? `<span class="atd-badge">${a.tipo_visita}</span>` : '—'}</td>
+      <td>${a.midia || '—'}</td>
+      <td>${a.corretor_atendimento || '—'}</td>
+      <td>${a.gerente_atendimento || a.gerente || '—'}</td>
+      <td>${a.empresa || '—'}</td>
+      <td style="white-space:normal; max-width:220px;">${a.observacao || '—'}</td>
+    </tr>`).join('');
+}
+// A busca por texto dispara isso a cada tecla; sem debounce, cada tecla refazia a tabela
+// inteira E destruía/recriava os dois gráficos (donut + barras) do zero.
+const renderAtendimentosDebounced = debounce(renderAtendimentos, 250);
+
+function exportarAtendimentosCSV() {
+  if (!atdUltimosFiltrados.length) { showToast('Nenhum atendimento para exportar.', 'error'); return; }
+  const cols = ['data', 'nome', 'telefone', 'email', 'tipo_visita', 'midia', 'corretor_origem', 'gerente', 'corretor_atendimento', 'gerente_atendimento', 'empresa', 'observacao'];
+  const cabecalho = ['Data', 'Nome', 'Telefone', 'Email', 'Tipo de Visita', 'Mídia', 'Corretor Origem', 'Gerente', 'Corretor de Atendimento', 'Gerente Atendimento', 'Empresa', 'Observação'];
+  // Neutraliza injeção de fórmula: campos que começam com =, +, -, @ (ou tab/CR) são
+  // interpretados como fórmula executável ao abrir no Excel/Sheets — prefixamos com
+  // apóstrofo (convenção que força leitura como texto) antes de escapar aspas.
+  const escFormula = (s) => /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+  const esc = (v) => `"${escFormula(String(v ?? '')).replace(/"/g, '""')}"`;
+  const linhas = [cabecalho.map(esc).join(';')];
+  atdUltimosFiltrados.forEach(a => {
+    linhas.push(cols.map(c => esc(c === 'data' ? fmtDataAtendimento(a._data) : a[c])).join(';'));
+  });
+  const csv = '﻿' + linhas.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Atendimentos_${PROJETO_ATIVO ? PROJETO_ATIVO.exportPrefix : 'Quaddra'}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2006,6 +2713,10 @@ function renderFinanceiro() {
   }
   tabela.querySelector('thead').innerHTML = headHTML;
   tabela.querySelector('tbody').innerHTML = bodyHTML;
+
+  // Guarda os dados já filtrados/ordenados pra exportarFluxoExcel() montar a planilha a
+  // partir dos NÚMEROS reais, em vez de raspar o HTML já formatado como texto (ver função).
+  window.ultimoFinanceiroExport = { filtradas, meses };
 }
 
 function toggleDetalheMesFinanceiro(mesId) {
@@ -2018,10 +2729,51 @@ function toggleDetalheMesFinanceiro(mesId) {
 }
 
 function exportarFluxoExcel() {
-  const orig = document.getElementById("tabelaFluxoCompilado");
-  const clone = orig.cloneNode(true);
-  clone.querySelectorAll('.hide-unit-col').forEach(el => el.classList.remove('hide-unit-col'));
-  const wb = XLSX.utils.table_to_book(clone, { sheet: "Fluxo Mensal" });
+  // Antes: table_to_book() em cima do HTML já renderizado — os valores saíam como TEXTO
+  // pré-formatado ("R$ 1.234,56"), e quem abrisse no Excel não conseguia somar/filtrar
+  // as colunas sem antes limpar a formatação. Agora monta a planilha a partir dos números
+  // reais (aoa_to_sheet) e aplica formato de moeda nativo do Excel na célula numérica.
+  const dados = window.ultimoFinanceiroExport;
+  if (!dados || !dados.meses.length) { showToast('Nenhum dado financeiro para exportar.', 'error'); return; }
+  const { filtradas, meses } = dados;
+
+  const header = ['Mês/Ano', ...filtradas.map(u => {
+    const rotulo = u.torre ? `Ap ${u.numero_unidade} (${u.torre})` : `Ap ${u.id_unidade}`;
+    const cliente = maskCliente(u.cliente_nome).replace(/<[^>]+>/g, ''); // tira as tags do span de máscara
+    return cliente ? `${rotulo} - ${cliente}` : rotulo;
+  }), 'Total Mês', 'Acumulado'];
+
+  const aoa = [header];
+  let acum = 0;
+  meses.forEach(mes => {
+    let totalMes = 0;
+    const row = [mes];
+    filtradas.forEach(u => {
+      const soma = u.fluxo_financeiro.filter(f => f.data_vencimento === mes).reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
+      totalMes += soma;
+      row.push(soma);
+    });
+    acum += totalMes;
+    row.push(totalMes, acum);
+    aoa.push(row);
+  });
+  const totalRow = ['Total Unidade'];
+  filtradas.forEach(u => totalRow.push(u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0)));
+  totalRow.push(acum, null);
+  aoa.push(totalRow);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const ultimaColNum = filtradas.length + 2; // colunas de unidade + Total Mês + Acumulado
+  for (let r = 1; r < aoa.length; r++) {
+    for (let c = 1; c <= ultimaColNum; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r, c })];
+      if (cell && typeof cell.v === 'number') cell.z = 'R$ #,##0.00';
+    }
+  }
+  ws['!cols'] = [{ wch: 12 }, ...filtradas.map(() => ({ wch: 18 })), { wch: 16 }, { wch: 16 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Fluxo Mensal');
   XLSX.writeFile(wb, `Fluxo_Financeiro_${PROJETO_ATIVO.exportPrefix}.xlsx`);
   showToast('Excel exportado com sucesso!', 'success');
 }
@@ -2095,11 +2847,32 @@ function setNum(id, value, decimals){
 const fmtBRLsim = v => (isFinite(v)?v:0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
 const fmtBRL2 = v => (isFinite(v)?v:0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:2});
 const fmtPct = v => (isFinite(v)?v:0).toLocaleString('pt-BR',{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1});
-function addMonths(date,n){ const d=new Date(date.getTime()); d.setMonth(d.getMonth()+n); return d; }
+// Parseia "yyyy-MM-dd" (valor de <input type="date">) como data LOCAL (meia-noite local),
+// nunca como new Date(string), que o motor JS interpreta como UTC — em fuso de Brasília
+// (UTC-3) isso podia fazer a data "voltar" um dia ao ser lida de volta com getDate()/getMonth().
+function parseISOLocal(str){
+  if(!str) return null;
+  const [y,m,d] = String(str).split('-').map(Number);
+  if(!y || !m || !d) return null;
+  return new Date(y, m-1, d);
+}
+function addMonths(date,n){
+  const d = new Date(date.getTime());
+  const diaAlvo = d.getDate();
+  d.setDate(1); // evita "vazar" pro mês seguinte ao somar meses vindo de dia 29/30/31
+  d.setMonth(d.getMonth()+n);
+  const diasNoMesAlvo = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  d.setDate(Math.min(diaAlvo, diasNoMesAlvo)); // trava no último dia do mês alvo, se ele for mais curto
+  return d;
+}
 function fmtDate(d){ return d.toLocaleDateString('pt-BR'); }
 function monthlyRate(annual){ return Math.pow(1+annual,1/12)-1; }
-function todayISO(){ return new Date().toISOString().slice(0,10); }
-function addMonthsISO(iso, n){ const d = new Date(iso); d.setMonth(d.getMonth()+n); return d.toISOString().slice(0,10); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function addMonthsISO(iso, n){
+  const base = parseISOLocal(iso) || new Date(iso);
+  const d = addMonths(base, n);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function mesesEntre(dataBase, dataAlvo){ return (dataAlvo.getFullYear()-dataBase.getFullYear())*12 + (dataAlvo.getMonth()-dataBase.getMonth()); }
 
 document.getElementById('dataProposta').value = todayISO();
@@ -2202,8 +2975,11 @@ document.getElementById('manualRefToggle').addEventListener('change', (e)=>{
     document.getElementById('valorReferenciaCustomHint').textContent = 'Digite o valor de tabela manualmente (nenhuma unidade real associada).';
   } else { refreshUnidadeInfo(); }
 });
-document.getElementById('valorReferencia').addEventListener('input', ()=>{ if(document.getElementById('manualRefToggle').checked) render(); });
-document.getElementById('valorReferenciaCustom').addEventListener('input', ()=>{ if(document.getElementById('manualRefToggle').checked) render(); });
+// render() recalcula o fluxo inteiro (parcelas, VP, tabela) a cada chamada — sem debounce,
+// cada tecla digitada nos campos numéricos do Simulador refazia tudo do zero.
+const renderDebounced = debounce(render, 200);
+document.getElementById('valorReferencia').addEventListener('input', ()=>{ if(document.getElementById('manualRefToggle').checked) renderDebounced(); });
+document.getElementById('valorReferenciaCustom').addEventListener('input', ()=>{ if(document.getElementById('manualRefToggle').checked) renderDebounced(); });
 
 // ---------- TABS ----------
 let activeFlow = 'padrao';
@@ -2287,7 +3063,7 @@ function renderCustomRows(){
       const i=+e.target.dataset.i, f=e.target.dataset.f;
       if(f==='dataInicio') customRows[i][f]=e.target.value;
       else customRows[i][f]= parseFlexible(e.target.value);
-      render();
+      renderDebounced();
     });
   });
   wrap.querySelectorAll('.icon-btn').forEach(btn=>{
@@ -2395,7 +3171,7 @@ function buildPadraoSchedule(){
   const n = Math.round(num('numMensais'))||cfg.numMensaisDefault;
   const primeiro = Math.round(num('primeiroReforco'))||cfg.primeiroReforcoDefault;
   const intervalo = Math.round(num('intervaloReforco'))||cfg.intervaloReforcoDefault;
-  const dataAto = new Date(document.getElementById('dataAto').value || todayISO());
+  const dataAto = parseISOLocal(document.getElementById('dataAto').value) || parseISOLocal(todayISO());
   const {rows} = buildFlowRows(cfg, valor, cv, n, primeiro, intervalo, dataAto);
 
   if (document.getElementById('reforcoExtraToggle').checked) {
@@ -2427,13 +3203,13 @@ function expandCustomRows(dataBase){
     const dataInicio = r.dataInicio || todayISO();
     for(let i=0;i<qtd;i++){
       const dataPagamento = info.intervalo>0 ? addMonthsISO(dataInicio, i*info.intervalo) : dataInicio;
-      expanded.push({ data: new Date(dataPagamento), desc: info.label + (qtd>1 ? ' ('+(i+1)+'/'+qtd+')' : ''), valor: r.valor, tipo: r.tipo,
+      expanded.push({ data: parseISOLocal(dataPagamento), desc: info.label + (qtd>1 ? ' ('+(i+1)+'/'+qtd+')' : ''), valor: r.valor, tipo: r.tipo,
         milestone: r.tipo==='anuais' || r.tipo==='semestrais' || r.tipo==='trimestrais' });
     }
   });
   const chaveRows = customRows.filter(r=>r.tipo==='chave');
   const dataEntrega = document.getElementById('dataEntregaCustom').value
-    ? new Date(document.getElementById('dataEntregaCustom').value)
+    ? parseISOLocal(document.getElementById('dataEntregaCustom').value)
     : (expanded.length ? new Date(Math.max(...expanded.map(x=>x.data.getTime()))) : new Date(dataBase));
   chaveRows.forEach(r=>{ expanded.push({ data: new Date(dataEntrega.getTime()), desc:'Chave / Repasse', valor:r.valor, tipo:'chave', chaves:true }); });
   const baseY = dataBase.getFullYear(), baseM = dataBase.getMonth();
@@ -2447,7 +3223,7 @@ function expandCustomRows(dataBase){
 
 function buildCustomSchedule(){
   const cfg = window.PROJETO_ATIVO.simulador;
-  const dataBase = new Date(document.getElementById('dataBaseCustom').value || todayISO());
+  const dataBase = parseISOLocal(document.getElementById('dataBaseCustom').value) || parseISOLocal(todayISO());
   const rows = expandCustomRows(dataBase);
   const taxaAnual = num('taxaAnualCustom')/100;
   const valorReferencia = num('valorReferenciaCustom');
@@ -2567,12 +3343,12 @@ document.getElementById('reforcoExtraToggle').addEventListener('change', (e)=>{
   document.getElementById('reforcoExtraPct').disabled = !e.target.checked;
   render();
 });
-document.getElementById('reforcoExtraData').addEventListener('input', ()=>{ updateReforcoExtraLabel(); render(); });
-document.getElementById('reforcoExtraPct').addEventListener('input', render);
+document.getElementById('reforcoExtraData').addEventListener('input', ()=>{ updateReforcoExtraLabel(); renderDebounced(); });
+document.getElementById('reforcoExtraPct').addEventListener('input', renderDebounced);
 updateReforcoExtraLabel();
 document.querySelectorAll('#panelPadrao input, #panelCustom input').forEach(inp=>{
   if(inp.id==='valorReferencia' || inp.id==='valorReferenciaCustom') return;
-  inp.addEventListener('input', render);
+  inp.addEventListener('input', renderDebounced);
 });
 
 // ---------- PV FIX UI ----------
