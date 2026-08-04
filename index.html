@@ -2301,7 +2301,10 @@ window.salvarUnidadeData = async function(id) {
     action: "updateUnit", id_unidade: String(u.id_unidade), id_torre: u.torre || undefined,
     status_espelho: u.status_espelho, cliente_nome: u.cliente_nome, observacoes: u.observacoes || "",
     origem_venda: u.origem_venda || "",
-    fase_esteira: String(u.fase_esteira), fluxo_financeiro: fluxoFormatado
+    fase_esteira: String(u.fase_esteira), fluxo_financeiro: fluxoFormatado,
+    // Usuário logado (o mesmo texto digitado na tela de login) — o Apps Script usa isso
+    // pra gravar quem fez a alteração na aba Log_Alteracoes.
+    usuario: localStorage.getItem(LOGIN_STORAGE_KEY) || "desconhecido"
   };
   setSyncStatus('loading', 'Enviando dados...');
   try {
