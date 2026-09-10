@@ -27,6 +27,7 @@
   /* Identidade Yuny (institucional) */
   --carvao:   #141414;
   --offwhite: #E4E3DE;
+  --offwhite-rgb: 228,227,222; /* mesmo #E4E3DE acima, em "r,g,b" pra rgba() no Resumo Executivo v2 */
   --bege:     #C7B299;
   --bege-dk:  #7A6448;
   --azul:     #00B0B9;
@@ -397,6 +398,66 @@ textarea { resize: vertical; min-height: 65px; }
 .raiox-item b { font-weight: 600; }
 .raiox-item span.raiox-count { color: var(--text-muted); }
 
+/* ══════════ RESUMO EXECUTIVO v2 — vista "relatório de diretoria" ══════════
+   Tema escuro + dourado, inspirado num mockup que o Rogerio trouxe. As cores não são
+   fixas: usam --proj-primaria-escura e --proj-acento (já trocados por selecionarProjeto()
+   pra cada Quaddra), então o Lorena fica num vinho-escuro e o Jesuíno num verde-escuro,
+   cada um com a identidade que já existia — só essa aba muda de claro pra escuro, o resto
+   do app continua igual. Todo o escopo abaixo é ".panel-resumo X" de propósito: .chart-card
+   e .kpiv2-* são compartilhados com a aba Atendimentos, e não dá pra reestilizar globalmente. */
+.panel-resumo {
+  background: var(--proj-primaria-escura);
+  color: var(--offwhite);
+  padding: 2rem 2.25rem 2.5rem;
+  gap: 1.5rem;
+}
+.panel-resumo .rx-header-icon { background: var(--proj-acento); color: var(--proj-primaria-escura); }
+.panel-resumo .rx-header h2 { color: var(--offwhite); font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -0.01em; }
+.panel-resumo .rx-header p { color: rgba(var(--offwhite-rgb), 0.55); }
+
+.rx-hero-panel { padding: 0.15rem 0.1rem 0; }
+.rx-hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
+.rx-hero-eyebrow { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--offwhite-rgb), 0.5); margin-bottom: 0.6rem; }
+.rx-hero-number { font-family: 'Fraunces', serif; font-weight: 500; font-size: 4rem; line-height: 0.95; letter-spacing: -0.01em; color: var(--offwhite); }
+.rx-hero-delta { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.9rem; padding: 0.3rem 0.75rem; border-radius: 100px; background: rgba(143,190,133,0.15); color: #8FBE85; font-size: 0.8rem; font-weight: 600; }
+.rx-hero-delta.rx-neutra { background: rgba(var(--offwhite-rgb),0.1); color: rgba(var(--offwhite-rgb),0.7); }
+.rx-hero-date { text-align: right; color: rgba(var(--offwhite-rgb), 0.5); font-size: 0.78rem; white-space: nowrap; }
+.rx-hero-date b { color: var(--proj-acento); font-weight: 600; }
+
+.rx-goal-panel { background: rgba(var(--offwhite-rgb),0.045); border: 1px solid rgba(var(--offwhite-rgb),0.12); border-radius: 14px; padding: 1.15rem 1.35rem 1.05rem; margin-top: 1.5rem; }
+.rx-goal-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.85rem; gap: 1rem; flex-wrap: wrap; }
+.rx-goal-head span:first-child { font-weight: 600; color: var(--offwhite); font-size: 0.88rem; }
+.rx-goal-head span:last-child { color: rgba(var(--offwhite-rgb), 0.5); font-size: 0.78rem; }
+.rx-goal-track { height: 9px; border-radius: 100px; background: rgba(var(--offwhite-rgb),0.1); border: 1px solid rgba(var(--offwhite-rgb),0.08); overflow: hidden; }
+.rx-goal-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, rgba(var(--offwhite-rgb),0.35), var(--proj-acento)); transition: width 0.4s ease; }
+.rx-goal-labels { display: flex; justify-content: space-between; margin-top: 0.6rem; font-size: 0.75rem; color: rgba(var(--offwhite-rgb), 0.55); gap: 0.5rem; }
+.rx-goal-labels b { color: var(--offwhite); font-weight: 600; }
+
+.panel-resumo .kpiv2-card { background: rgba(var(--offwhite-rgb),0.045); border: 1px solid rgba(var(--offwhite-rgb),0.12); box-shadow: none; }
+.panel-resumo .kpiv2-icon { background: rgba(var(--offwhite-rgb),0.1); color: var(--proj-acento); }
+.panel-resumo .kpiv2-title, .panel-resumo .kpiv2-value { color: var(--offwhite); }
+.panel-resumo .kpiv2-sub, .panel-resumo .kpiv2-caption { color: rgba(var(--offwhite-rgb), 0.55); }
+
+.panel-resumo .chart-card { background: rgba(var(--offwhite-rgb),0.045); border: 1px solid rgba(var(--offwhite-rgb),0.12); box-shadow: none; }
+.panel-resumo .chart-card-head { color: var(--offwhite); }
+.panel-resumo .chart-card-head i { color: var(--proj-acento); }
+.panel-resumo .chart-card-title { color: rgba(var(--offwhite-rgb), 0.55); }
+.panel-resumo .chart-legend-item { color: rgba(var(--offwhite-rgb), 0.8); }
+
+.rx-trend-panel { background: rgba(var(--offwhite-rgb),0.045); border: 1px solid rgba(var(--offwhite-rgb),0.12); border-radius: 14px; padding: 1.25rem 1.4rem; }
+.rx-trend-title { font-size: 0.95rem; font-weight: 700; color: var(--offwhite); margin-bottom: 1rem; }
+.rx-trend-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.rx-trend-num { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 600; color: var(--offwhite); }
+.rx-trend-num.rx-alta { color: #8FBE85; }
+.rx-trend-num.rx-baixa { color: #D08A7C; }
+.rx-trend-sub { font-size: 0.78rem; color: rgba(var(--offwhite-rgb), 0.55); margin-top: 0.3rem; }
+
+.panel-resumo .section-title-lg { color: var(--offwhite); font-family: 'Fraunces', serif; font-weight: 600; }
+.panel-resumo .raiox-card { background: rgba(var(--offwhite-rgb),0.045); border: 1px solid rgba(var(--offwhite-rgb),0.12); box-shadow: none; }
+.panel-resumo .raiox-item { color: var(--offwhite); }
+.panel-resumo .raiox-count { color: rgba(var(--offwhite-rgb), 0.55); }
+@media (max-width: 700px) { .rx-trend-row { grid-template-columns: 1fr; } .rx-hero-number { font-size: 3rem; } }
+
 /* ── ABA ATENDIMENTOS ── */
 .panel-atendimentos { flex: 1; padding: 1.5rem 1.75rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; background: var(--app-bg, var(--surface2)); }
 .atd-filtros { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -540,6 +601,9 @@ textarea { resize: vertical; min-height: 65px; }
 #simComercial .card.accent::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--brass);}
 #simComercial .card.discount .v{color:var(--ok);}
 #simComercial .card.discount.negative .v{color:var(--brick);}
+#simComercial .card.discount-pv .v{color:var(--brick);}
+#simComercial .card.discount-pv.negative .v{color:var(--ok);}
+#simComercial .card .warn-badge{display:inline-block;margin-top:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--brick);background:var(--brick-soft);padding:2px 8px;border-radius:20px;}
 #simComercial .card.muted .v{color:var(--slate);font-size:16px;}
 #simComercial .timeline-panel{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px 22px;box-shadow:var(--shadow);}
 #simComercial .timeline-panel h2{margin-bottom:4px;border:none;padding:0;}
@@ -761,8 +825,32 @@ textarea { resize: vertical; min-height: 65px; }
     <div class="rx-header">
       <div class="rx-header-icon"><i class="ti ti-layout-grid"></i></div>
       <div>
-        <h2>Panorama de Estoque</h2>
+        <h2>Resumo Executivo</h2>
         <p id="rxSubtitulo">Visão geral do empreendimento</p>
+      </div>
+    </div>
+
+    <div class="rx-hero-panel">
+      <div class="rx-hero-top">
+        <div class="rx-hero-main">
+          <div class="rx-hero-eyebrow">VGV Total Vendido</div>
+          <div class="rx-hero-number" id="rxVgvVendido">R$ 0</div>
+          <div class="rx-hero-delta rx-neutra" id="rxHeroDelta">— vendas neste mês</div>
+        </div>
+        <div class="rx-hero-date">Atualizado em <b id="rxAtualizadoEm">—</b></div>
+      </div>
+
+      <div class="rx-goal-panel">
+        <div class="rx-goal-head">
+          <span>Atingimento em VGV</span>
+          <span id="rxGoalNota">Estoque total: R$ 0</span>
+        </div>
+        <div class="rx-goal-track"><div class="rx-goal-fill" id="rxGoalFill" style="width:0%"></div></div>
+        <div class="rx-goal-labels">
+          <span>R$ 0</span>
+          <span id="rxGoalCenter"><b>R$ 0 vendidos</b> · 0%</span>
+          <span id="rxGoalTotalLabel">R$ 0</span>
+        </div>
       </div>
     </div>
 
@@ -772,12 +860,6 @@ textarea { resize: vertical; min-height: 65px; }
         <div class="kpiv2-sub">Total do Projeto</div>
         <div class="kpiv2-value" id="rxPctAtingimento">0%</div>
         <div class="kpiv2-caption" id="rxAtingimentoCaption">0 de 0 unidades</div>
-      </div>
-      <div class="kpiv2-card">
-        <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-blue"><i class="ti ti-chart-line"></i></div><span class="kpiv2-title">VGV Vendido</span></div>
-        <div class="kpiv2-sub">Volume Geral de Vendas</div>
-        <div class="kpiv2-value" id="rxVgvVendido">R$ 0</div>
-        <div class="kpiv2-caption">Total acumulado</div>
       </div>
       <div class="kpiv2-card">
         <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-amber"><i class="ti ti-cash"></i></div><span class="kpiv2-title">VGV Vendido no Mês</span></div>
@@ -797,6 +879,12 @@ textarea { resize: vertical; min-height: 65px; }
         <div class="kpiv2-value" id="rxEstoqueDisponivel">0 unidades</div>
         <div class="kpiv2-caption" id="rxEstoqueCaption">De 0 unidades totais</div>
       </div>
+      <div class="kpiv2-card">
+        <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-purple"><i class="ti ti-receipt"></i></div><span class="kpiv2-title">Ticket Médio</span></div>
+        <div class="kpiv2-sub">Por unidade vendida</div>
+        <div class="kpiv2-value" id="rxTicketMedio">R$ 0</div>
+        <div class="kpiv2-caption">Sobre unidades com CV assinado</div>
+      </div>
     </div>
 
     <div class="resumo-exec-grid">
@@ -810,6 +898,20 @@ textarea { resize: vertical; min-height: 65px; }
         <div class="chart-card-head"><i class="ti ti-chart-bar"></i> Origem das Vendas</div>
         <div class="chart-card-title" id="rxOrigemChartTitulo">Origem das Vendas</div>
         <div class="chart-canvas-wrap"><canvas id="rxChartOrigem"></canvas></div>
+      </div>
+    </div>
+
+    <div class="rx-trend-panel">
+      <div class="rx-trend-title">Comparativo Mensal</div>
+      <div class="rx-trend-row">
+        <div>
+          <div class="rx-trend-num" id="rxTrendVgv">R$ 0</div>
+          <div class="rx-trend-sub" id="rxTrendVgvSub">VGV vendido no mês atual</div>
+        </div>
+        <div>
+          <div class="rx-trend-num" id="rxTrendUnidades">0 unidades</div>
+          <div class="rx-trend-sub" id="rxTrendUnidadesSub">Contratos assinados no mês</div>
+        </div>
       </div>
     </div>
 
@@ -1123,7 +1225,7 @@ textarea { resize: vertical; min-height: 65px; }
         <div class="card muted"><div class="k">Valor original (tabela)</div><div class="v" id="outTabelaNominal">—</div></div>
         <div class="card muted"><div class="k">VP de tabela</div><div class="v" id="outTabelaVP">—</div></div>
         <div class="card" id="outDescNomCard"><div class="k">Desconto Nominal</div><div class="v" id="outDescNom">—</div></div>
-        <div class="card" id="outDescPvCard"><div class="k">Desconto no PV</div><div class="v" id="outDescPv">—</div></div>
+        <div class="card" id="outDescPvCard"><div class="k">Desconto no PV</div><div class="v" id="outDescPv">—</div><div class="warn-badge" id="outDescPvWarn" style="display:none">⚠ Rever</div></div>
       </div>
 
       <div class="panel no-print" id="pvFixPanel" style="display:none">
@@ -1293,39 +1395,39 @@ function buildJesuinoTree() {
 // Tabela de preço oficial do Jesuíno (R$/m² por fase) — recalculada a partir das fórmulas
 // reais da planilha ESPELHO + Espelho_2 (ver nota original no simulador do Jesuíno).
 const JESUINO_PRICING = [
-  {u:'281', label:'281 (Duplex)', m:611.40, pre:53168.14, lanc:57114.13},
-  {u:'271', label:'271', m:393.43, pre:51123.21, lanc:54917.44},
-  {u:'261', label:'261', m:393.43, pre:50243.94, lanc:53972.91},
-  {u:'251', label:'251', m:393.51, pre:49379.80, lanc:53044.63},
-  {u:'241', label:'241', m:393.05, pre:48650.04, lanc:52260.72},
-  {u:'231', label:'231', m:393.05, pre:47931.08, lanc:51488.39},
-  {u:'221', label:'221', m:392.72, pre:47222.74, lanc:50727.48},
-  {u:'211', label:'211', m:395.01, pre:46524.86, lanc:49977.81},
-  {u:'201', label:'201', m:392.72, pre:45837.30, lanc:49239.23},
-  {u:'191', label:'191', m:395.01, pre:45159.91, lanc:48511.55},
-  {u:'181', label:'181', m:395.01, pre:44492.52, lanc:47794.63},
-  {u:'171', label:'171', m:392.72, pre:44052.00, lanc:47321.42},
-  {u:'161', label:'161', m:392.99, pre:43615.84, lanc:46852.89},
-  {u:'151', label:'151', m:392.72, pre:43184.00, lanc:46389.00},
-  {u:'141', label:'141', m:393.36, pre:42860.12, lanc:46041.08},
-  {u:'131', label:'131', m:392.72, pre:42538.67, lanc:45695.77},
-  {u:'121', label:'121', m:392.57, pre:42219.63, lanc:45353.06},
-  {u:'111', label:'111', m:395.01, pre:41902.98, lanc:45012.91},
-  {u:'101', label:'101', m:394.93, pre:41588.71, lanc:44675.31},
-  {u:'91',  label:'91',  m:394.26, pre:41276.79, lanc:44228.56},
-  {u:'81',  label:'81',  m:395.05, pre:40967.22, lanc:43454.56},
-  {u:'72',  label:'72 (Duplex)', m:558.07, pre:35586.66, lanc:36685.54},
-  {u:'71',  label:'71',  m:389.14, pre:40659.96, lanc:42694.10},
-  {u:'62',  label:'62',  m:326.59, pre:40355.01, lanc:41946.96},
-  {u:'61',  label:'61',  m:391.98, pre:40355.01, lanc:41946.96},
-  {u:'52',  label:'52',  m:331.76, pre:40052.35, lanc:41212.89},
-  {u:'51',  label:'51',  m:388.63, pre:40052.35, lanc:41212.89},
-  {u:'42',  label:'42',  m:326.75, pre:39751.96, lanc:40491.66},
-  {u:'41',  label:'41',  m:393.45, pre:39751.96, lanc:40491.66},
-  {u:'32',  label:'32',  m:332.65, pre:39453.82, lanc:39783.06},
-  {u:'31',  label:'31',  m:390.10, pre:39453.82, lanc:39783.06},
-  {u:'22',  label:'22 (Garden)', m:342.95, pre:33897.30, lanc:35593.12},
-  {u:'21',  label:'21 (Garden)', m:475.87, pre:33897.30, lanc:35593.12},
+  {u:'281', label:'281 (Duplex)', m:611.40, pre:56529, lanc:58968},
+  {u:'271', label:'271', m:393.43, pre:54095, lanc:56564},
+  {u:'261', label:'261', m:393.43, pre:52776, lanc:55455},
+  {u:'251', label:'251', m:393.51, pre:51488, lanc:54368},
+  {u:'241', label:'241', m:393.05, pre:50479, lanc:53433},
+  {u:'231', label:'231', m:393.05, pre:49489, lanc:52514},
+  {u:'221', label:'221', m:392.72, pre:48519, lanc:51610},
+  {u:'211', label:'211', m:395.01, pre:47567, lanc:50723},
+  {u:'201', label:'201', m:392.72, pre:46635, lanc:49850},
+  {u:'191', label:'191', m:395.01, pre:45720, lanc:48993},
+  {u:'181', label:'181', m:395.01, pre:44824, lanc:48150},
+  {u:'171', label:'171', m:392.72, pre:44270, lanc:47556},
+  {u:'161', label:'161', m:392.99, pre:43724, lanc:46969},
+  {u:'151', label:'151', m:392.72, pre:43184, lanc:46389},
+  {u:'141', label:'141', m:393.36, pre:42968, lanc:46157},
+  {u:'131', label:'131', m:392.72, pre:42753, lanc:45926},
+  {u:'121', label:'121', m:392.57, pre:42539, lanc:45697},
+  {u:'111', label:'111', m:395.01, pre:42327, lanc:45468},
+  {u:'101', label:'101', m:394.93, pre:42115, lanc:45241},
+  {u:'91',  label:'91',  m:394.26, pre:41905, lanc:44902},
+  {u:'81',  label:'81',  m:395.05, pre:41695, lanc:44228},
+  {u:'72',  label:'72 (Duplex)', m:558.07, pre:36310, lanc:37524},
+  {u:'71',  label:'71',  m:389.14, pre:41487, lanc:43565},
+  {u:'62',  label:'62',  m:326.59, pre:41279, lanc:45468},
+  {u:'61',  label:'61',  m:391.98, pre:41279, lanc:42911},
+  {u:'52',  label:'52',  m:331.76, pre:41073, lanc:44902},
+  {u:'51',  label:'51',  m:388.63, pre:41073, lanc:42267},
+  {u:'42',  label:'42',  m:326.75, pre:40867, lanc:43565},
+  {u:'41',  label:'41',  m:393.45, pre:40867, lanc:41633},
+  {u:'32',  label:'32',  m:332.65, pre:40663, lanc:42267},
+  {u:'31',  label:'31',  m:390.10, pre:40663, lanc:41009},
+  {u:'22',  label:'22 (Garden)', m:342.95, pre:34586, lanc:36319},
+  {u:'21',  label:'21 (Garden)', m:475.87, pre:34586, lanc:36319},
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1402,14 +1504,14 @@ const PROJECTS = {
     simulador: {
       labelEntrada: 'Sinal (ato)',
       temJanela: false,
-      labelMensais: 'Mensais (47x)',
+      labelMensais: 'Mensais (45x)',
       labelAnuais: 'Anuais (4x)',
       milestones: [
         { label: 'Chaves / Repasse', tabLabel: 'Chaves', desc: 'Chaves / Repasse', dateMode:'relative', mesesAposUltimaMensal:1, defaultPct:0 }
       ],
       defaultPcts: { entrada:35, janela:0, mensais:0, anuais:50 },
       numAnuais: 4, mensalInicio: 1, mergeAnualComMensal: true,
-      numMensaisDefault: 47, primeiroReforcoDefault: 4, intervaloReforcoDefault: 12,
+      numMensaisDefault: 45, primeiroReforcoDefault: 8, intervaloReforcoDefault: 12,
       tabPrimeiroReforcoDefault: 4, tabIntervaloReforcoDefault: 12,
       valorTotalDefault: 1600000, valorM2Default: 4200, metragemDefault: '389,05',
       dataEntregaCustomDefault: '2030-06-30',
@@ -1417,14 +1519,14 @@ const PROJECTS = {
         pre:  { entrada:5, janela:0, mensais:15, anuais:10, milestone0:70, milestone1:0 },
         lanc: { entrada:10, janela:0, mensais:15, anuais:15, milestone0:60, milestone1:0 }
       },
-      flowLabel: 'Fluxo Padrão (Sinal · 47 Mensais · 4 Anuais · Chaves)',
+      flowLabel: 'Fluxo Padrão (Sinal · 45 Mensais · 4 Anuais · Chaves)',
       estruturaHint: 'Preenchido com o plano oficial que a incorporadora oferece — ajuste livremente para a negociação de cada cliente.',
       termosNotaExtra: '',
       cronogramaHint: (mChaves) => `Chaves cai automaticamente 1 mês após a última mensal (mês ${mChaves??48}).`,
       reforcoExtraDisponivel: true, reforcoExtraDefaultOn: true, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
       customRowsDefault: [
         {tipo:'ato', qtd:1, valor:160000, offsetMeses:0},
-        {tipo:'mensais', qtd:47, valor:15000, offsetMeses:1},
+        {tipo:'mensais', qtd:45, valor:15000, offsetMeses:1},
         {tipo:'anuais', qtd:4, valor:80000, offsetMeses:4},
         {tipo:'chave', qtd:1, valor:960000, offsetMeses:null}
       ]
@@ -1757,9 +1859,11 @@ function renderResumoExecutivo() {
   const vgvDe = u => u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
   const hoje = new Date();
   const mesAtualStr = String(hoje.getMonth() + 1).padStart(2, '0') + '/' + hoje.getFullYear();
+  const dataAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+  const mesAnteriorStr = String(dataAnterior.getMonth() + 1).padStart(2, '0') + '/' + dataAnterior.getFullYear();
   const nomesMes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-  let vgvVendido = 0, cVendido = 0, vgvMes = 0;
+  let vgvVendido = 0, cVendido = 0, vgvMes = 0, cVendidoMes = 0, vgvMesAnterior = 0, cVendidoMesAnterior = 0;
   let vgvTotal = 0;
   let vgvPotencial = 0, cDisponivel = 0;
   const totalUnidades = units.length;
@@ -1788,7 +1892,9 @@ function renderResumoExecutivo() {
       const origemKey = u.origem_venda || 'Não informada';
       porOrigem[origemKey] = (porOrigem[origemKey] || 0) + 1;
       // VGV "vendido no mês": mês da 1ª parcela (ato) da unidade cai no mês atual -> conta o VGV total dela.
-      if (mesDaPrimeiraParcela(u) === mesAtualStr) vgvMes += vgvUnidade;
+      const mesParcela = mesDaPrimeiraParcela(u);
+      if (mesParcela === mesAtualStr) { vgvMes += vgvUnidade; cVendidoMes++; }
+      else if (mesParcela === mesAnteriorStr) { vgvMesAnterior += vgvUnidade; cVendidoMesAnterior++; }
     } else if (u.status_espelho === 'DISPONIVEL') {
       vgvPotencial += valorRef;
       cDisponivel++;
@@ -1797,6 +1903,9 @@ function renderResumoExecutivo() {
 
   // Atingimento Global = % de unidades vendidas sobre o total (não é uma razão financeira/VGV).
   const pctAtingimento = totalUnidades > 0 ? Math.round((cVendido / totalUnidades) * 100) : 0;
+  // Atingimento em VGV = % do VGV total do estoque (vendido + disponível) já vendido — base do gráfico de meta.
+  const pctGoal = vgvTotal > 0 ? Math.min(100, Math.round((vgvVendido / vgvTotal) * 100)) : 0;
+  const ticketMedio = cVendido > 0 ? vgvVendido / cVendido : 0;
 
   document.getElementById('rxSubtitulo').textContent = 'Status Global ' + (PROJETO_ATIVO ? PROJETO_ATIVO.nome : '');
   document.getElementById('rxPctAtingimento').textContent = `${pctAtingimento}%`;
@@ -1807,12 +1916,57 @@ function renderResumoExecutivo() {
   document.getElementById('rxCountVendido').textContent = `${cVendido} unidades`;
   document.getElementById('rxEstoqueDisponivel').textContent = `${cDisponivel} unidades`;
   document.getElementById('rxEstoqueCaption').textContent = `De ${totalUnidades} unidades totais · VGV potencial ${fmtBRL(vgvPotencial)}`;
+  document.getElementById('rxTicketMedio').textContent = fmtBRL(ticketMedio);
+
+  // ── Data de atualização (topo do painel escuro) ──
+  const dataFmt = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '');
+  const horaFmt = hoje.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('rxAtualizadoEm').textContent = `${dataFmt}, ${horaFmt}`;
+
+  // ── Chip de destaque junto ao número herói: vendas fechadas neste mês (dado real, sem comparação inventada) ──
+  const heroDeltaEl = document.getElementById('rxHeroDelta');
+  if (cVendidoMes > 0) {
+    heroDeltaEl.className = 'rx-hero-delta';
+    heroDeltaEl.innerHTML = `<i class="ti ti-trending-up"></i> ${cVendidoMes} ${cVendidoMes === 1 ? 'venda fechada' : 'vendas fechadas'} em ${nomesMes[hoje.getMonth()]}`;
+  } else {
+    heroDeltaEl.className = 'rx-hero-delta rx-neutra';
+    heroDeltaEl.innerHTML = `Nenhuma venda fechada em ${nomesMes[hoje.getMonth()]} ainda`;
+  }
+
+  // ── Barra "Atingimento em VGV" — sobre o VGV total do estoque (vendido + disponível), não uma meta externa ──
+  document.getElementById('rxGoalNota').textContent = `Estoque total: ${fmtBRL(vgvTotal)}`;
+  document.getElementById('rxGoalFill').style.width = `${pctGoal}%`;
+  document.getElementById('rxGoalCenter').innerHTML = `<b>${fmtBRL(vgvVendido)} vendidos</b> · ${pctGoal}%`;
+  document.getElementById('rxGoalTotalLabel').textContent = fmtBRL(vgvTotal);
+
+  // ── Comparativo mensal: VGV do mês (com variação real vs. mês anterior) + unidades ──
+  const trendVgvEl = document.getElementById('rxTrendVgv');
+  const trendVgvSubEl = document.getElementById('rxTrendVgvSub');
+  trendVgvEl.textContent = fmtBRL(vgvMes);
+  if (vgvMesAnterior > 0) {
+    const pctVar = Math.round(((vgvMes - vgvMesAnterior) / vgvMesAnterior) * 100);
+    trendVgvEl.className = 'rx-trend-num ' + (pctVar >= 0 ? 'rx-alta' : 'rx-baixa');
+    trendVgvSubEl.textContent = `VGV vendido no mês atual — ${pctVar >= 0 ? 'alta' : 'queda'} de ${Math.abs(pctVar)}% vs. mês anterior`;
+  } else {
+    trendVgvEl.className = 'rx-trend-num';
+    trendVgvSubEl.textContent = 'VGV vendido no mês atual — sem vendas no mês anterior para comparar';
+  }
+  const trendUnEl = document.getElementById('rxTrendUnidades');
+  const trendUnSubEl = document.getElementById('rxTrendUnidadesSub');
+  trendUnEl.textContent = `${cVendidoMes} ${cVendidoMes === 1 ? 'unidade' : 'unidades'}`;
+  const diffUn = cVendidoMes - cVendidoMesAnterior;
+  trendUnSubEl.textContent = `Contratos assinados no mês${cVendidoMesAnterior > 0 || cVendidoMes > 0 ? ` (${diffUn >= 0 ? '+' : ''}${diffUn} vs. mês anterior)` : ''}`;
 
   const temTorres = PROJETO_ATIVO && PROJETO_ATIVO.torres && PROJETO_ATIVO.torres.length > 1;
   const tituloTorre = temTorres ? 'Vendas por Torre' : 'Vendas por Empreendimento';
   document.getElementById('rxTorreChartTitulo').textContent = `${tituloTorre} (${cVendido} Unidades)`;
   document.getElementById('rxOrigemChartTitulo').textContent = `Origem das Vendas (${cVendido} Unidades)`;
   document.getElementById('rxRaioXTitulo').textContent = `Raio-X das Vendas (${cVendido} unidades)`;
+
+  // Cor de texto clara pros gráficos, já que essa aba agora tem fundo escuro (Chart.js usa cinza-escuro por padrão).
+  const RX_INK = 'rgba(228,227,222,0.82)';
+  const RX_INK_DIM = 'rgba(228,227,222,0.6)';
+  const RX_GRID = 'rgba(228,227,222,0.1)';
 
   // ── Gráfico donut: vendas por torre ──
   const chavesTorre = Object.keys(porTorre).sort((a, b) => porTorre[b].vendidas - porTorre[a].vendidas);
@@ -1822,7 +1976,7 @@ function renderResumoExecutivo() {
     rxChartTorreObj = new Chart(document.getElementById('rxChartTorre'), {
       type: 'doughnut',
       data: { labels: chavesTorre, datasets: [{ data: chavesTorre.map(k => porTorre[k].vendidas), backgroundColor: coresTorre, borderWidth: 0 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '60%' }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { titleColor: '#fff', bodyColor: '#fff' } }, cutout: '60%' }
     });
   }
   document.getElementById('rxLegendaTorre').innerHTML = chavesTorre.map((k, i) =>
@@ -1836,21 +1990,27 @@ function renderResumoExecutivo() {
     rxChartOrigemObj = new Chart(document.getElementById('rxChartOrigem'), {
       type: 'bar',
       data: { labels: chavesOrigem, datasets: [{ label: 'Unidades Vendidas', data: chavesOrigem.map(k => porOrigem[k]), backgroundColor: coresOrigem, borderRadius: 4 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Unidades' }, ticks: { precision: 0 } } } }
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: RX_INK } }, tooltip: { titleColor: '#fff', bodyColor: '#fff' } },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'Unidades', color: RX_INK_DIM }, ticks: { precision: 0, color: RX_INK_DIM }, grid: { color: RX_GRID } },
+          x: { ticks: { color: RX_INK_DIM }, grid: { color: RX_GRID } }
+        }
+      }
     });
   }
 
   // ── Raio-X: Por Torre / Por Metragem (com denominador) e Por Origem (sem denominador) ──
   const renderRaio = (obj, cor) => Object.keys(obj).sort((a, b) => obj[b].vendidas - obj[a].vendidas).map(k =>
     `<div class="raiox-item"><span class="raiox-dot" style="background:${cor}"></span><b>${k}:</b> ${obj[k].vendidas} unidades <span class="raiox-count">(de ${obj[k].total})</span></div>`).join('')
-    || '<div class="raiox-item" style="color:var(--text-muted)">Nenhuma venda registrada.</div>';
+    || '<div class="raiox-item" style="color:rgba(228,227,222,0.55)">Nenhuma venda registrada.</div>';
 
   document.getElementById('rxRaioTorre').innerHTML = renderRaio(porTorre, '#7C3AED');
   document.getElementById('rxRaioTipo').innerHTML = renderRaio(porTipo, '#16A34A');
 
   document.getElementById('rxRaioOrigem').innerHTML = chavesOrigem.map((k, i) =>
     `<div class="raiox-item"><span class="raiox-dot" style="background:${coresOrigem[i]}"></span><b>${k}:</b> ${porOrigem[k]} unidades</div>`
-  ).join('') || '<div class="raiox-item" style="color:var(--text-muted)">Nenhuma venda registrada.</div>';
+  ).join('') || '<div class="raiox-item" style="color:rgba(228,227,222,0.55)">Nenhuma venda registrada.</div>';
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3291,8 +3451,9 @@ function render(){
     document.getElementById('outDescPv').textContent = fmtPct(descPv);
     descNomCard.className = 'card discount' + (descNom<0?' negative':'');
     descNomCard.querySelector('.k').textContent = descNom>=0 ? 'Desconto Nominal' : 'Ágio Nominal';
-    descPvCard.className = 'card discount' + (descPv<0?' negative':'');
+    descPvCard.className = 'card discount-pv' + (descPv<0?' negative':'');
     descPvCard.querySelector('.k').textContent = descPv>=0 ? 'Desconto no PV' : 'Ágio no PV';
+    document.getElementById('outDescPvWarn').style.display = descPv>=0 ? 'inline-block' : 'none';
     pvFixOpenBtn.style.display = descPv>0.0005 ? 'inline-flex' : 'none';
     if(descPv<=0.0005) document.getElementById('pvFixPanel').style.display='none';
   } else {
@@ -3300,6 +3461,7 @@ function render(){
     document.getElementById('outDescPv').textContent = '—';
     descNomCard.className='card'; descNomCard.querySelector('.k').textContent='Desconto Nominal';
     descPvCard.className='card'; descPvCard.querySelector('.k').textContent='Desconto no PV';
+    document.getElementById('outDescPvWarn').style.display='none';
     pvFixOpenBtn.style.display='none';
     document.getElementById('pvFixPanel').style.display='none';
   }
