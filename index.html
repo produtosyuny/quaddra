@@ -1230,9 +1230,13 @@ textarea { resize: vertical; min-height: 65px; }
 
       <div class="panel no-print" id="pvFixPanel" style="display:none">
         <h2 style="display:flex;justify-content:space-between;align-items:center">
-          Zerar desconto no PV
+          <span id="pvFixTitle">Zerar desconto no PV</span>
           <button class="btn ghost" id="pvFixClose" style="padding:4px 8px">×</button>
         </h2>
+        <div class="field">
+          <label>Perda desejada no PV (%) — 0 = zerar o desconto</label>
+          <input id="pvFixPct" type="text" inputmode="decimal" value="0">
+        </div>
         <div class="toggle-group">
           <button data-pvmode="parcela" class="active">Aplicar numa parcela</button>
           <button data-pvmode="total">Aplicar no valor total</button>
@@ -1247,7 +1251,10 @@ textarea { resize: vertical; min-height: 65px; }
           <button class="btn ghost" id="pvFixRemove">Remover ajuste</button>
         </div>
       </div>
-      <button class="btn no-print" id="pvFixOpenBtn" style="align-self:flex-start;display:none">⚖ Zerar desconto no PV</button>
+      <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="pvFixOpenBtn" style="align-self:flex-start;display:none">⚖ Zerar desconto no PV</button>
+        <button class="btn" id="marginOpenBtn" style="align-self:flex-start;display:none">🎯 Margem no PV</button>
+      </div>
 
       <div class="timeline-panel">
         <h2>Formato do fluxo</h2>
@@ -1315,64 +1322,64 @@ function buildTorresLorenaTree() {
     });
   }
   // ---------- TORRE PARQUE — 14 unidades, só final 1 ----------
-  addUnidade("Parque", "P", 11,  1, 1, 468.19, 5, 14759763, "Garden", "Garden G");
-  addUnidade("Parque", "P", 21,  2, 1, 387.98, 4, 13677689, "Tipo");
-  addUnidade("Parque", "P", 31,  3, 1, 388.96, 4, 14013665, "Tipo");
-  addUnidade("Parque", "P", 41,  4, 1, 388.65, 4, 14303299, "Tipo");
-  addUnidade("Parque", "P", 51,  5, 1, 388.05, 4, 14582507, "Tipo");
-  addUnidade("Parque", "P", 61,  6, 1, 387.98, 4, 14804946, "Tipo");
-  addUnidade("Parque", "P", 71,  7, 1, 388.16, 4, 15036653, "Tipo");
+  addUnidade("Parque", "P", 11,  1, 1, 468.19, 5, 14849798, "Garden", "Garden G");
+  addUnidade("Parque", "P", 21,  2, 1, 387.98, 4, 13761123, "Tipo");
+  addUnidade("Parque", "P", 31,  3, 1, 388.96, 4, 14099148, "Tipo");
+  addUnidade("Parque", "P", 41,  4, 1, 388.65, 4, 14390549, "Tipo");
+  addUnidade("Parque", "P", 51,  5, 1, 388.05, 4, 14671460, "Tipo");
+  addUnidade("Parque", "P", 61,  6, 1, 387.98, 4, 14895256, "Tipo");
+  addUnidade("Parque", "P", 71,  7, 1, 388.16, 4, 15128377, "Tipo");
   addUnidade("Parque", "P", 81,  8, 1, 387.98, 4, 15137544, "Tipo");
-  addUnidade("Parque", "P", 91,  9, 1, 388.29, 4, 15568422, "Tipo");
-  addUnidade("Parque", "P", 101, 10, 1, 388.05, 4, 15859215, "Tipo");
-  addUnidade("Parque", "P", 111, 11, 1, 388.78, 4, 16065248, "Tipo");
+  addUnidade("Parque", "P", 91,  9, 1, 388.29, 4, 15663389, "Tipo");
+  addUnidade("Parque", "P", 101, 10, 1, 388.05, 4, 15955956, "Tipo");
+  addUnidade("Parque", "P", 111, 11, 1, 388.78, 4, 16298341, "Tipo");
   addUnidade("Parque", "P", 121, 12, 1, 387.74, 4, 16469897, "Tipo");
   addUnidade("Parque", "P", 131, 13, 1, 388.29, 4, 16941221, "Tipo");
   addUnidade("Parque", "P", 141, 14, 1, 714.97, 6, 31794821, "Cobertura", "Cobertura");
   // ---------- TORRE JARDINS — 14 unidades, só final 1 ----------
-  addUnidade("Jardins", "J", 11,  1, 1, 595.82, 4, 17007325, "Garden", "Garden P");
-  addUnidade("Jardins", "J", 21,  2, 1, 387.98, 4, 13677689, "Tipo");
+  addUnidade("Jardins", "J", 11,  1, 1, 595.82, 4, 16978636, "Garden", "Garden P");
+  addUnidade("Jardins", "J", 21,  2, 1, 387.98, 4, 13654617, "Tipo");
   addUnidade("Jardins", "J", 31,  3, 1, 388.29, 4, 13881064, "Tipo");
-  addUnidade("Jardins", "J", 41,  4, 1, 387.98, 4, 14278970, "Tipo");
-  addUnidade("Jardins", "J", 51,  5, 1, 388.29, 4, 14590617, "Tipo");
+  addUnidade("Jardins", "J", 41,  4, 1, 387.98, 4, 14254884, "Tipo");
+  addUnidade("Jardins", "J", 51,  5, 1, 388.29, 4, 14566004, "Tipo");
   addUnidade("Jardins", "J", 61,  6, 1, 387.98, 4, 14690361, "Tipo");
   addUnidade("Jardins", "J", 71,  7, 1, 388.36, 4, 14928323, "Tipo");
   addUnidade("Jardins", "J", 81,  8, 1, 387.98, 4, 15137544, "Tipo");
   addUnidade("Jardins", "J", 91,  9, 1, 388.29, 4, 15447928, "Tipo");
-  addUnidade("Jardins", "J", 101, 10, 1, 387.80, 4, 15849946, "Tipo");
-  addUnidade("Jardins", "J", 111, 11, 1, 388.29, 4, 16170861, "Tipo");
+  addUnidade("Jardins", "J", 101, 10, 1, 387.80, 4, 15823210, "Tipo");
+  addUnidade("Jardins", "J", 111, 11, 1, 388.29, 4, 16143583, "Tipo");
   addUnidade("Jardins", "J", 121, 12, 1, 387.98, 4, 16480243, "Tipo");
-  addUnidade("Jardins", "J", 131, 13, 1, 388.29, 4, 17073362, "Tipo");
-  addUnidade("Jardins", "J", 141, 14, 1, 714.97, 6, 32042820, "Cobertura", "Cobertura");
+  addUnidade("Jardins", "J", 131, 13, 1, 388.29, 4, 17044562, "Tipo");
+  addUnidade("Jardins", "J", 141, 14, 1, 714.97, 6, 31988769, "Cobertura", "Cobertura");
   // ---------- TORRE EUROPA — 28 unidades, final 1 e final 2 ----------
-  addUnidade("Europa", "E", 11,  1, 1, 300.98, 4, 10377017, "Tipo");
-  addUnidade("Europa", "E", 21,  2, 1, 300.98, 4, 10611042, "Tipo");
-  addUnidade("Europa", "E", 31,  3, 1, 301.05, 4, 10846225, "Tipo");
+  addUnidade("Europa", "E", 11,  1, 1, 300.98, 4, 10440317, "Tipo");
+  addUnidade("Europa", "E", 21,  2, 1, 300.98, 4, 10675769, "Tipo");
+  addUnidade("Europa", "E", 31,  3, 1, 301.05, 4, 10912387, "Tipo");
   addUnidade("Europa", "E", 41,  4, 1, 309.90, 4, 11091056, "Tipo");
   addUnidade("Europa", "E", 51,  5, 1, 300.80, 4, 11216359, "Tipo");
   addUnidade("Europa", "E", 61,  6, 1, 300.98, 4, 11395692, "Tipo");
   addUnidade("Europa", "E", 71,  7, 1, 300.74, 4, 11560081, "Tipo");
   addUnidade("Europa", "E", 81,  8, 1, 301.82, 4, 11776200, "Tipo");
-  addUnidade("Europa", "E", 91,  9, 1, 300.74, 4, 12058054, "Tipo");
+  addUnidade("Europa", "E", 91,  9, 1, 300.74, 4, 12131609, "Tipo");
   addUnidade("Europa", "E", 101, 10, 1, 300.98, 4, 12206140, "Tipo");
-  addUnidade("Europa", "E", 111, 11, 1, 301.05, 4, 12537689, "Tipo");
-  addUnidade("Europa", "E", 121, 12, 1, 302.04, 4, 12929274, "Tipo");
-  addUnidade("Europa", "E", 131, 13, 1, 300.98, 4, 13233970, "Tipo");
-  addUnidade("Europa", "E", 141, 14, 1, 546.81, 5, 24603853, "Cobertura", "Cobertura");
-  addUnidade("Europa", "E", 12,  1, 2, 300.98, 4, 10377017, "Tipo");
-  addUnidade("Europa", "E", 22,  2, 2, 300.98, 4, 10611042, "Tipo");
-  addUnidade("Europa", "E", 32,  3, 2, 300.98, 4, 10843908, "Tipo");
+  addUnidade("Europa", "E", 111, 11, 1, 301.05, 4, 12614169, "Tipo");
+  addUnidade("Europa", "E", 121, 12, 1, 302.04, 4, 13008143, "Tipo");
+  addUnidade("Europa", "E", 131, 13, 1, 300.98, 4, 13314697, "Tipo");
+  addUnidade("Europa", "E", 141, 14, 1, 546.81, 5, 24753936, "Cobertura", "Cobertura");
+  addUnidade("Europa", "E", 12,  1, 2, 300.98, 4, 10440317, "Tipo");
+  addUnidade("Europa", "E", 22,  2, 2, 300.98, 4, 10675769, "Tipo");
+  addUnidade("Europa", "E", 32,  3, 2, 300.98, 4, 10910055, "Tipo");
   addUnidade("Europa", "E", 42,  4, 2, 300.84, 4, 10986445, "Tipo");
   addUnidade("Europa", "E", 52,  5, 2, 300.98, 4, 11222107, "Tipo");
   addUnidade("Europa", "E", 62,  6, 2, 300.98, 4, 11395692, "Tipo");
-  addUnidade("Europa", "E", 72,  7, 2, 301.47, 4, 11679213, "Tipo");
+  addUnidade("Europa", "E", 72,  7, 2, 301.47, 4, 11750456, "Tipo");
   addUnidade("Europa", "E", 82,  8, 2, 309.93, 4, 12092332, "Tipo");
   addUnidade("Europa", "E", 92,  9, 2, 300.80, 4, 11967029, "Tipo");
-  addUnidade("Europa", "E", 102, 10, 2, 300.98, 4, 12301347, "Tipo");
-  addUnidade("Europa", "E", 112, 11, 2, 300.98, 4, 12534213, "Tipo");
-  addUnidade("Europa", "E", 122, 12, 2, 300.98, 4, 12884091, "Tipo");
-  addUnidade("Europa", "E", 132, 13, 2, 300.98, 4, 13233970, "Tipo");
-  addUnidade("Europa", "E", 142, 14, 2, 546.57, 5, 24589950, "Cobertura", "Cobertura");
+  addUnidade("Europa", "E", 102, 10, 2, 300.98, 4, 12376385, "Tipo");
+  addUnidade("Europa", "E", 112, 11, 2, 300.98, 4, 12610672, "Tipo");
+  addUnidade("Europa", "E", 122, 12, 2, 300.98, 4, 12962684, "Tipo");
+  addUnidade("Europa", "E", 132, 13, 2, 300.98, 4, 13314697, "Tipo");
+  addUnidade("Europa", "E", 142, 14, 2, 546.57, 5, 24739949, "Cobertura", "Cobertura");
   return list;
 }
 
@@ -1452,7 +1459,7 @@ const PROJECTS = {
     simulador: {
       labelEntrada: 'Ato',
       temJanela: true,
-      labelMensais: 'Mensais (21x)',
+      labelMensais: 'Mensais (20x)',
       labelAnuais: 'Anuais (2x)',
       milestones: [
         { label: 'Chave (30/08/2028)', tabLabel: 'Chave', desc: 'Chave (parcela única)', dateMode:'fixed', data: new Date(2028,7,30), defaultPct:10 },
@@ -1460,12 +1467,13 @@ const PROJECTS = {
       ],
       defaultPcts: { entrada:5, janela:5, mensais:10, anuais:10 },
       numAnuais: 2, mensalInicio: 3, mergeAnualComMensal: false,
-      // ATUALIZADO (tabela AGOSTO/2026): Ato passou de jul/26 pra ago/26 — um mês a menos
-      // até as datas travadas de Chave/Financiamento, então 22 mensais viraram 21, e o 1º
-      // reforço anual (que cai em datas fixas: dez/26 e dez/27) passou do mês 5 pro mês 4
-      // a partir do Ato. Intervalo entre reforços (12 meses) e as datas de Chave/Financiamento
-      // continuam as mesmas.
-      numMensaisDefault: 21, primeiroReforcoDefault: 4, intervaloReforcoDefault: 12,
+      // ATUALIZADO (tabela SETEMBRO/2026): Ato passou de ago/26 pra set/26 — um mês a menos
+      // até as datas travadas de Chave/Financiamento, então 21 mensais viraram 20. O 1º reforço
+      // anual e o intervalo entre reforços continuam com os mesmos offsets (mês 4 e +12 meses a
+      // partir do Ato) — como são relativos ao Ato, o mês 4 acompanhou o Ato e passou a cair em
+      // jan/27 (era dez/26), e o mês 16 em jan/28 (era dez/27), batendo com a tabela nova.
+      // Chave e Financiamento são datas travadas e não mudam.
+      numMensaisDefault: 20, primeiroReforcoDefault: 4, intervaloReforcoDefault: 12,
       tabPrimeiroReforcoDefault: 4, tabIntervaloReforcoDefault: 12,
       valorTotalDefault: 13500000, valorM2Default: 34800, metragemDefault: '388,00',
       dataEntregaCustomDefault: '2028-08-30',
@@ -1473,14 +1481,14 @@ const PROJECTS = {
         pre:  { entrada:5, janela:5, mensais:10, anuais:10, milestone0:10, milestone1:60 },
         lanc: { entrada:5, janela:5, mensais:10, anuais:10, milestone0:10, milestone1:60 }
       },
-      flowLabel: 'Fluxo Padrão (Ato · 30/60 · 21 Mensais · 2 Anuais · Chave · Financiamento)',
+      flowLabel: 'Fluxo Padrão (Ato · 30/60 · 20 Mensais · 2 Anuais · Chave · Financiamento)',
       estruturaHint: 'Preenchido com o plano oficial que a incorporadora oferece — ajuste livremente para a negociação de cada cliente. Chave e Financiamento têm data de entrega travada (ver Cronograma).',
       termosNotaExtra: ' Hoje o Quaddra Lorena só tem uma tabela oficial (não há pré-lançamento distinto) — os dois blocos abaixo vêm iguais; ajuste "Pré-lançamento" separadamente se um dia existir uma condição diferente.',
       cronogramaHint: (m0, m1) => `A 1ª mensal só entra após a janela de 30/60 dias (mês 3). Chave e Financiamento caem em datas travadas, independente da data do ato: <strong>Chave 30/08/2028</strong> · <strong>Financiamento 30/10/2028</strong> (mês ${m0??'—'} e ${m1??'—'} a partir do ato).`,
       reforcoExtraDisponivel: false, reforcoExtraDefaultOn: false, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
       customRowsDefault: [
         {tipo:'ato', qtd:1, valor:1350000, offsetMeses:0},
-        {tipo:'mensais', qtd:21, valor:64286, offsetMeses:1},
+        {tipo:'mensais', qtd:20, valor:64286, offsetMeses:1},
         {tipo:'anuais', qtd:2, valor:675000, offsetMeses:2},
         {tipo:'chave', qtd:1, valor:9450000, offsetMeses:null}
       ]
@@ -3255,16 +3263,17 @@ function montarCustomRowsDoProjeto(){
 }
 window.montarCustomRowsDoProjeto = montarCustomRowsDoProjeto;
 
-// ---------- PV FIX ----------
+// ---------- PV FIX (zerar desconto no PV, ou mirar numa margem/perda % específica) ----------
 let pvFix = null;
 function applyPvFixToRows(rows, r, tabelaVP){
   if(!pvFix || pvFix.mode!=='parcela' || !(tabelaVP>0)) return;
+  const targetVP = tabelaVP * (1 - (pvFix.targetPct||0)/100);
   const vpRaw = rows.reduce((s,row)=> s + row.valor/Math.pow(1+r,row.mes), 0);
-  const shortfall = tabelaVP - vpRaw;
+  const shortfall = targetVP - vpRaw;
   if(shortfall<=0) return;
-  const target = rows.find(row=>row.mes===pvFix.mes);
+  const target = rows[pvFix.rowIndex];
   if(!target) return;
-  const addNominal = shortfall * Math.pow(1+r, pvFix.mes);
+  const addNominal = shortfall * Math.pow(1+r, target.mes);
   target.valor += addNominal;
   target.desc += ' (+ ajuste PV)';
   target.ajuste = true;
@@ -3444,6 +3453,7 @@ function render(){
   const descNomCard = document.getElementById('outDescNomCard');
   const descPvCard = document.getElementById('outDescPvCard');
   const pvFixOpenBtn = document.getElementById('pvFixOpenBtn');
+  const marginOpenBtn = document.getElementById('marginOpenBtn');
   if(valorReferencia>0 && tabela && tabela.vp>0){
     const descNom = 1 - nominal/valorReferencia;
     const descPv = 1 - vp/tabela.vp;
@@ -3455,7 +3465,8 @@ function render(){
     descPvCard.querySelector('.k').textContent = descPv>=0 ? 'Desconto no PV' : 'Ágio no PV';
     document.getElementById('outDescPvWarn').style.display = descPv>=0 ? 'inline-block' : 'none';
     pvFixOpenBtn.style.display = descPv>0.0005 ? 'inline-flex' : 'none';
-    if(descPv<=0.0005) document.getElementById('pvFixPanel').style.display='none';
+    marginOpenBtn.style.display = 'inline-flex';
+    if(descPv<=0.0005 && pvFixPainelAbertoPor==='zerar') document.getElementById('pvFixPanel').style.display='none';
   } else {
     document.getElementById('outDescNom').textContent = '—';
     document.getElementById('outDescPv').textContent = '—';
@@ -3463,12 +3474,15 @@ function render(){
     descPvCard.className='card'; descPvCard.querySelector('.k').textContent='Desconto no PV';
     document.getElementById('outDescPvWarn').style.display='none';
     pvFixOpenBtn.style.display='none';
+    marginOpenBtn.style.display='none';
     document.getElementById('pvFixPanel').style.display='none';
   }
 
   const rowSelect = document.getElementById('pvFixRowSelect');
   const prevSel = rowSelect.value;
-  rowSelect.innerHTML = rows.map(row=>`<option value="${row.mes}">Mês ${row.mes} — ${row.desc} (${fmtBRL2(row.valor)})</option>`).join('');
+  // value = índice da linha (não o mês): no Mês a Mês é comum duas parcelas caírem no mesmo mês
+  // (ex.: mensal + anual), e usar o mês como chave fazia o ajuste cair sempre na primeira delas.
+  rowSelect.innerHTML = rows.map((row,i)=>`<option value="${i}">Mês ${row.mes} — ${row.desc} (${fmtBRL2(row.valor)})</option>`).join('');
   if(prevSel) rowSelect.value = prevSel;
 
   const body = document.getElementById('scheduleBody');
@@ -3523,8 +3537,21 @@ document.querySelectorAll('#panelPadrao input, #panelCustom input').forEach(inp=
 
 // ---------- PV FIX UI ----------
 let pvFixUiMode = 'parcela';
-document.getElementById('pvFixOpenBtn').addEventListener('click',()=>{ document.getElementById('pvFixPanel').style.display='block'; updatePvFixExplain(); });
+let pvFixPainelAbertoPor = 'zerar'; // 'zerar' | 'margem' — controla se o painel fecha sozinho quando o desconto chega a ~0%
+document.getElementById('pvFixOpenBtn').addEventListener('click',()=>{
+  pvFixPainelAbertoPor = 'zerar';
+  document.getElementById('pvFixPct').value = '0';
+  document.getElementById('pvFixPanel').style.display='block';
+  updatePvFixExplain();
+});
+document.getElementById('marginOpenBtn').addEventListener('click',()=>{
+  pvFixPainelAbertoPor = 'margem';
+  document.getElementById('pvFixPanel').style.display='block';
+  document.getElementById('pvFixPct').focus();
+  updatePvFixExplain();
+});
 document.getElementById('pvFixClose').addEventListener('click',()=>{ document.getElementById('pvFixPanel').style.display='none'; });
+document.getElementById('pvFixPct').addEventListener('input', updatePvFixExplain);
 document.querySelectorAll('[data-pvmode]').forEach(b=>{
   b.addEventListener('click',()=>{
     document.querySelectorAll('[data-pvmode]').forEach(x=>x.classList.remove('active'));
@@ -3535,23 +3562,28 @@ document.querySelectorAll('[data-pvmode]').forEach(b=>{
   });
 });
 function updatePvFixExplain(){
+  const pct = num('pvFixPct');
+  const alvoTxt = Math.abs(pct)<0.005 ? 'zerar o desconto' : `deixar o desconto em ${pct.toLocaleString('pt-BR',{maximumFractionDigits:2})}%`;
+  document.getElementById('pvFixTitle').textContent = Math.abs(pct)<0.005 ? 'Zerar desconto no PV' : `Margem no PV — alvo ${pct.toLocaleString('pt-BR',{maximumFractionDigits:2})}%`;
   const el = document.getElementById('pvFixExplain');
   el.textContent = pvFixUiMode==='parcela'
-    ? 'O valor que falta pra zerar o desconto no PV é somado, em nominal, só na parcela escolhida — as demais ficam do jeito que estão.'
-    : 'O preço total da unidade é reajustado para cima, proporcionalmente em toda a estrutura de pagamento, até o PV bater com o VP de tabela.';
+    ? `O valor que falta pra ${alvoTxt} no PV é somado, em nominal, só na parcela escolhida — as demais ficam do jeito que estão. Só soma valor (nunca reduz): se o desconto atual já for menor ou igual à meta, nada é alterado.`
+    : `O preço total da unidade é reajustado (pra cima ou pra baixo, conforme o caso), proporcionalmente em toda a estrutura de pagamento, até o PV bater com a meta de ${alvoTxt}.`;
 }
 document.getElementById('pvFixApply').addEventListener('click',()=>{
+  const targetPct = num('pvFixPct');
   if(pvFixUiMode==='parcela'){
-    const mes = parseInt(document.getElementById('pvFixRowSelect').value,10);
-    pvFix = {mode:'parcela', mes};
+    const rowIndex = parseInt(document.getElementById('pvFixRowSelect').value,10);
+    pvFix = {mode:'parcela', rowIndex, targetPct};
     render();
   } else {
     const data = activeFlow==='padrao' ? buildPadraoSchedule() : buildCustomSchedule();
     const r = monthlyRate(data.taxaAnual);
     const vpAtual = data.rows.reduce((s,row)=> s + row.valor/Math.pow(1+r,row.mes), 0);
     const tabelaVP = data.tabela ? data.tabela.vp : 0;
+    const targetVP = tabelaVP * (1 - targetPct/100);
     if(tabelaVP>0 && vpAtual>0){
-      const fator = tabelaVP/vpAtual;
+      const fator = targetVP/vpAtual;
       if(activeFlow==='padrao'){
         if(valueMode==='total'){ document.getElementById('valorTotal').value = Math.round(getUnitValuePadrao()*fator); }
         else { document.getElementById('valorM2').value = (num('valorM2')*fator).toFixed(2); }
