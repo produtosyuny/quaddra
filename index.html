@@ -889,7 +889,7 @@ textarea { resize: vertical; min-height: 65px; }
 
     <div class="resumo-exec-grid">
       <div class="chart-card">
-        <div class="chart-card-head"><i class="ti ti-chart-donut-2"></i> Vendas por Torre</div>
+        <div class="chart-card-head"><i class="ti ti-chart-donut-2"></i> <span id="rxTorreChartHead">Vendas por Torre</span></div>
         <div class="chart-card-title" id="rxTorreChartTitulo">Vendas por Torre</div>
         <div class="chart-canvas-wrap"><canvas id="rxChartTorre"></canvas></div>
         <div class="chart-legend" id="rxLegendaTorre"></div>
@@ -918,7 +918,7 @@ textarea { resize: vertical; min-height: 65px; }
     <h3 class="section-title-lg" id="rxRaioXTitulo">Raio-X das Vendas</h3>
     <div class="raiox-grid">
       <div class="raiox-card">
-        <div class="raiox-head raiox-head-purple"><i class="ti ti-building-skyscraper"></i> Por Torre</div>
+        <div class="raiox-head raiox-head-purple"><i class="ti ti-building-skyscraper"></i> <span id="rxRaioTorreHead">Por Torre</span></div>
         <div id="rxRaioTorre"></div>
       </div>
       <div class="raiox-card">
@@ -1506,6 +1506,11 @@ const PROJECTS = {
     googleScriptUrl: "https://script.google.com/macros/s/AKfycbzYtg8Mwk-gZl31--ZKCcg3HyijAJzd8REFsGB34ffX3LcGV2ZRS0vCTROqIvYTD9tK/exec",
     atendimentosScriptUrl: "https://script.google.com/macros/s/AKfycbxuL1M82Z9D2JLMmkl4IvECgvK5l2fJ72RFLMb711omrTvHxybZ7Wea10_zLdb2duSj/exec",
     torres: null,
+    // Jesuíno é um único prédio (sem torres distintas) — cada andar tem apenas 2 unidades,
+    // "final 1" e "final 2", que É a divisão que faz sentido comercialmente aqui (posição/vista
+    // no andar). Por isso o card "Vendas por Torre" do Resumo Executivo agrupa por final neste
+    // projeto, em vez de por torre (que não existe) — ver breakdownPorFinal em renderKPIs().
+    breakdownPorFinal: true,
     exportPrefix: 'Quaddra_Jesuino',
     buildUnits: buildJesuinoTree,
     pricingTable: JESUINO_PRICING,
@@ -1880,11 +1885,12 @@ function renderResumoExecutivo() {
   const porTipo  = {};    // tipo  -> {total, vendidas}
   const porOrigem = {};   // origem_venda -> count (só unidades vendidas)
 
+  const porFinal = PROJETO_ATIVO && PROJETO_ATIVO.breakdownPorFinal;
   units.forEach(u => {
     const valorRef = resolverValorTabela(u) || vgvDe(u) || 0;
     vgvTotal += valorRef;
 
-    const torreKey = u.torre || 'Único';
+    const torreKey = porFinal ? ('Final ' + (u.final ?? '—')) : (u.torre || 'Único');
     const tipoKey  = u.tipo || 'Não informado';
     if (!porTorre[torreKey]) porTorre[torreKey] = { total: 0, vendidas: 0 };
     if (!porTipo[tipoKey])   porTipo[tipoKey]  = { total: 0, vendidas: 0 };
@@ -1966,8 +1972,10 @@ function renderResumoExecutivo() {
   trendUnSubEl.textContent = `Contratos assinados no mês${cVendidoMesAnterior > 0 || cVendidoMes > 0 ? ` (${diffUn >= 0 ? '+' : ''}${diffUn} vs. mês anterior)` : ''}`;
 
   const temTorres = PROJETO_ATIVO && PROJETO_ATIVO.torres && PROJETO_ATIVO.torres.length > 1;
-  const tituloTorre = temTorres ? 'Vendas por Torre' : 'Vendas por Empreendimento';
+  const tituloTorre = porFinal ? 'Vendas por Final' : (temTorres ? 'Vendas por Torre' : 'Vendas por Empreendimento');
+  document.getElementById('rxTorreChartHead').textContent = tituloTorre;
   document.getElementById('rxTorreChartTitulo').textContent = `${tituloTorre} (${cVendido} Unidades)`;
+  document.getElementById('rxRaioTorreHead').textContent = porFinal ? 'Por Final' : 'Por Torre';
   document.getElementById('rxOrigemChartTitulo').textContent = `Origem das Vendas (${cVendido} Unidades)`;
   document.getElementById('rxRaioXTitulo').textContent = `Raio-X das Vendas (${cVendido} unidades)`;
 
