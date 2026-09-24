@@ -358,7 +358,7 @@ textarea { resize: vertical; min-height: 65px; }
 .rx-header h2, .atd-header h2 { font-size: 1.4rem; font-weight: 700; color: var(--text); margin: 0; }
 .rx-header p, .atd-header p { font-size: 0.85rem; color: var(--text-muted); margin: 0.15rem 0 0; }
 
-.kpiv2-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+.kpiv2-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; }
 @media (max-width: 1300px) { .kpiv2-row { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 800px) { .kpiv2-row { grid-template-columns: repeat(2, 1fr); } }
 .kpiv2-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.35rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -884,6 +884,12 @@ textarea { resize: vertical; min-height: 65px; }
         <div class="kpiv2-sub">Por unidade vendida</div>
         <div class="kpiv2-value" id="rxTicketMedio">R$ 0</div>
         <div class="kpiv2-caption">Sobre unidades com CV assinado</div>
+      </div>
+      <div class="kpiv2-card">
+        <div class="kpiv2-head"><div class="kpiv2-icon kpiv2-icon-blue"><i class="ti ti-ruler-2"></i></div><span class="kpiv2-title">Valor de m² Médio</span></div>
+        <div class="kpiv2-sub">VGV vendido ÷ área vendida</div>
+        <div class="kpiv2-value" id="rxValorM2Medio">R$ 0</div>
+        <div class="kpiv2-caption" id="rxValorM2MedioCaption">Sobre unidades com CV assinado</div>
       </div>
     </div>
 
@@ -1879,6 +1885,7 @@ function renderResumoExecutivo() {
   let vgvVendido = 0, cVendido = 0, vgvMes = 0, cVendidoMes = 0, vgvMesAnterior = 0, cVendidoMesAnterior = 0;
   let vgvTotal = 0;
   let vgvPotencial = 0, cDisponivel = 0;
+  let areaVendida = 0; // soma da metragem privativa das unidades com CV assinado (p/ valor de m² médio)
   const totalUnidades = units.length;
 
   const porTorre = {};    // torre -> {total, vendidas}
@@ -1901,6 +1908,7 @@ function renderResumoExecutivo() {
       const vgvUnidade = vgvDe(u);
       vgvVendido += vgvUnidade;
       cVendido++;
+      areaVendida += Number(u.metragem) || 0;
       porTorre[torreKey].vendidas++;
       porTipo[tipoKey].vendidas++;
       const origemKey = u.origem_venda || 'Não informada';
@@ -1920,6 +1928,8 @@ function renderResumoExecutivo() {
   // Atingimento em VGV = % do VGV total do estoque (vendido + disponível) já vendido — base do gráfico de meta.
   const pctGoal = vgvTotal > 0 ? Math.min(100, Math.round((vgvVendido / vgvTotal) * 100)) : 0;
   const ticketMedio = cVendido > 0 ? vgvVendido / cVendido : 0;
+  // Valor de m² médio = VGV vendido ÷ área privativa total vendida (não é a média dos R$/m² de tabela por unidade).
+  const valorM2Medio = areaVendida > 0 ? vgvVendido / areaVendida : 0;
 
   document.getElementById('rxSubtitulo').textContent = 'Status Global ' + (PROJETO_ATIVO ? PROJETO_ATIVO.nome : '');
   document.getElementById('rxPctAtingimento').textContent = `${pctAtingimento}%`;
@@ -1931,6 +1941,10 @@ function renderResumoExecutivo() {
   document.getElementById('rxEstoqueDisponivel').textContent = `${cDisponivel} unidades`;
   document.getElementById('rxEstoqueCaption').textContent = `De ${totalUnidades} unidades totais · VGV potencial ${fmtBRL(vgvPotencial)}`;
   document.getElementById('rxTicketMedio').textContent = fmtBRL(ticketMedio);
+  document.getElementById('rxValorM2Medio').textContent = areaVendida > 0 ? `${fmtBRL(valorM2Medio)} /m²` : '—';
+  document.getElementById('rxValorM2MedioCaption').textContent = areaVendida > 0
+    ? `${fmtBRL(vgvVendido)} ÷ ${areaVendida.toLocaleString('pt-BR',{maximumFractionDigits:0})} m² vendidos`
+    : 'Sem unidades vendidas com metragem cadastrada';
 
   // ── Data de atualização (topo do painel escuro) ──
   const dataFmt = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '');
