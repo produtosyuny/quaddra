@@ -198,8 +198,11 @@ header {
 .tab-content.active { display: flex; }
 
 /* ── ESPELHO TAB ── */
-.panel-left  { flex: 1.2; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border-right: 1px solid var(--border); }
+.panel-left  { flex: 1.2; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; border-right: 1px solid var(--border); transition: flex 0.2s ease; }
 .panel-right { flex: 0.8; background: var(--surface); overflow-y: auto; display: flex; flex-direction: column; border-left: 1px solid var(--border); }
+/* painel lateral do espelho só aparece com unidade/card selecionado, ou é ocultado manualmente pelo botão */
+#tab-espelho.painel-oculto .panel-right { display: none !important; }
+#tab-espelho.painel-oculto .panel-left { border-right: 0; }
 
 .search-bar { position: relative; }
 .search-bar input { background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; padding: 0.55rem 1rem 0.55rem 2.25rem; font-size: 0.85rem; color: var(--text); width: 100%; font-family: inherit; transition: border-color 0.2s; }
@@ -464,6 +467,21 @@ textarea { resize: vertical; min-height: 65px; }
 .atd-filtro-grupo { display: flex; flex-direction: column; gap: 0.3rem; }
 .atd-filtro-grupo label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--bege-dk); letter-spacing: 0.05em; }
 .atd-filtro-grupo input, .atd-filtro-grupo select { padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface2); color: var(--text); font-size: 0.8rem; min-width: 140px; }
+
+/* ══════════ ATENDIMENTOS · FILTRO EM CHECKBOX (Empresa/Tipo/Mídia) ══════════ */
+.atd-check-dropdown { position: relative; }
+.atd-check-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 170px; max-width: 220px; padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface2); color: var(--text); font-size: 0.8rem; font-family: inherit; cursor: pointer; text-align: left; }
+.atd-check-trigger:hover { border-color: var(--proj-primaria, var(--azul)); }
+.atd-check-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.atd-check-panel { display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 230px; max-height: 260px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; box-shadow: 0 14px 34px -12px rgba(0,0,0,0.3); padding: 8px; }
+.atd-check-panel.open { display: block; }
+.atd-check-panel-actions { display: flex; gap: 6px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.atd-check-panel-actions button { flex: 1; font-size: 0.68rem; padding: 4px 6px; border: 1px solid var(--border2); border-radius: 5px; background: var(--surface2); color: var(--text); cursor: pointer; font-family: inherit; }
+.atd-check-panel-actions button:hover { background: var(--surface3); }
+.atd-check-item { display: flex; align-items: center; gap: 8px; padding: 5px 4px; font-size: 0.78rem; cursor: pointer; border-radius: 4px; }
+.atd-check-item:hover { background: var(--surface2); }
+.atd-check-item input { width: auto; margin: 0; }
+.atd-check-empty { font-size: 0.75rem; color: var(--text-muted); padding: 6px 4px; }
 .atd-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
 .btn-csv { background: #16A34A; color: #fff; border: 1px solid #16A34A; }
 .btn-csv:hover { background: #15803D; }
@@ -646,17 +664,102 @@ textarea { resize: vertical; min-height: 65px; }
 #simComercial .add-row-btn{ border:1px dashed var(--line);background:transparent;border-radius:6px;padding:8px; font-size:12.5px;font-weight:600;color:var(--slate);cursor:pointer;width:100%; }
 #simComercial .add-row-btn:hover{border-color:var(--brass);color:var(--brass);}
 #simComercial.client-mode .no-print{display:none !important;}
+/* topbar-actions também tem classe .no-print (some na impressão de verdade), mas em tela ela
+   precisa continuar visível no modo cliente — senão o botão "Modo cliente" some junto e não
+   tem mais como voltar pro modo edição. */
+#simComercial.client-mode .topbar-actions{display:flex !important;}
 #simComercial.client-mode .app{max-width:1100px;}
 #simComercial.client-mode .panel.inputs{display:none;}
 #simComercial.client-mode .layout{grid-template-columns:1fr;}
 #simComercial .campo-oculto{ display:none !important; }
 @media print{
+  /* O app inteiro é um shell de altura fixa (html/body com overflow:hidden, cada aba com
+     overflow:hidden e rolagem própria) — sem isso, a impressão só sai o pedaço que cabia na
+     tela no momento do clique, cortando o cronograma no meio. Pra imprimir, precisa liberar
+     a altura/rolagem de tudo que fica ACIMA do simulador, e esconder header/nav/outras abas
+     (que senão também saem impressas). */
+  html, body{height:auto !important;overflow:visible !important;}
+  #tela-app{height:auto !important;}
+  header, .nav-tabs{display:none !important;}
+  .tab-content{overflow:visible !important;height:auto !important;}
+  #tab-espelho, #tab-resumo, #tab-financeiro, #tab-atendimentos{display:none !important;}
+
   #simComercial{background:#fff;}
   #simComercial .no-print, #simComercial .panel.inputs, #simComercial .tabs, #simComercial .topbar-actions{display:none !important;}
+  #simComercial.client-mode .topbar-actions{display:none !important;} /* a exceção de tela do modo cliente não vale na impressão */
   #simComercial .layout{grid-template-columns:1fr;}
   #simComercial .app{padding:0;max-width:100%;}
   #simComercial .card, #simComercial .panel, #simComercial .table-panel, #simComercial .timeline-panel, #simComercial .client-strip{box-shadow:none;border:1px solid #ccc;}
+  #simComercial .table-scroll{max-height:none !important;overflow:visible !important;}
+  #simComercial .table-panel{overflow:visible !important;}
+  #simComercial .timeline-panel{break-inside:avoid;}
 }
+
+/* ══════════ RESPONSIVO · MOBILE ══════════ */
+@media(max-width:760px){
+  html,body{height:auto;min-height:100%;overflow:auto}
+  #tela-app{height:auto;min-height:100vh}
+  header{height:auto;min-height:56px;flex-wrap:wrap;padding:.55rem .75rem;gap:.45rem}
+  .header-left{width:100%;gap:.6rem;flex-wrap:wrap}
+  .nav-tabs{order:3;width:calc(100% + 1.5rem);margin:0 -.75rem;padding:0 .6rem;overflow-x:auto;gap:.1rem;scrollbar-width:none}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .tab-btn{white-space:nowrap;padding:.5rem .72rem;font-size:.72rem}
+  .header-right{position:absolute;right:.65rem;top:.65rem}
+  .header-right .btn-logout{padding:.3rem}
+  .header-right .sync-status span{display:none}
+  .tab-content.active{display:block;overflow:visible}
+  .panel-left,.panel-right,.panel-resumo,.panel-financeiro,.panel-atendimentos{width:100%;max-width:none;min-height:0;border:0;border-left:0;border-right:0;overflow:visible;padding:.85rem}
+  .panel-right{border-top:1px solid var(--border);margin-top:.75rem}
+  .kpis-grid,.kpiv2-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .espelho-cap-body{display:block}
+  .espelho-sidebar{margin-top:.8rem}
+  .grid-predio{overflow-x:auto}
+  .unit-box{min-width:90px}
+  .filter-bar,.atd-filtros{align-items:stretch;flex-direction:column}
+  .filter-options{flex-direction:column;align-items:flex-start}
+  .action-group{flex-wrap:wrap}
+  .table-container,.atd-table-wrap{overflow-x:auto}
+  .atd-table{min-width:850px}
+  .resumo-exec-grid,.raiox-grid{grid-template-columns:1fr}
+  .rx-hero-number{font-size:2.6rem}
+  #simComercial .app{padding:1rem .75rem 3rem}
+  #simComercial .client-strip{grid-template-columns:1fr}
+  #simComercial .layout{grid-template-columns:1fr}
+  #simComercial .panel.inputs{position:static}
+  #simComercial .termos-grid{grid-template-columns:1fr}
+  #simComercial .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #simComercial .table-scroll{overflow-x:auto}
+}
+@media(max-width:420px){
+  .kpis-grid,.kpiv2-row,#simComercial .cards{grid-template-columns:1fr}
+  .logo-badge{display:none}
+  .header-left .logo-title{gap:.35rem}
+  .header-right{top:.55rem}
+  .header-right .btn-logout{font-size:0}
+  .header-right .btn-logout i{font-size:1rem}
+}
+
+/* ══════════ AUDITORIA DE DADOS ══════════ */
+.auditoria-toolbar{display:flex;align-items:center;gap:.5rem;margin-bottom:12px}
+.auditoria-modal-backdrop{position:fixed;inset:0;background:rgba(20,20,20,.5);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.auditoria-modal-backdrop.open{display:flex}
+.auditoria-modal{width:min(720px,100%);max-height:min(680px,90vh);overflow:auto;background:var(--surface);border-radius:10px;box-shadow:0 20px 60px -20px rgba(0,0,0,.5);border:1px solid var(--border2)}
+.auditoria-head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;padding:1.1rem 1.3rem;border-bottom:1px solid var(--border);background:var(--surface2)}
+.auditoria-head h2{font-size:1.05rem;margin:0 0 2px;color:var(--text)}
+.auditoria-head p{font-size:.78rem;color:var(--text-muted);margin:0}
+.auditoria-close{width:28px;height:28px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--border2);border-radius:6px;cursor:pointer;color:var(--text-muted)}
+.auditoria-body{padding:1.1rem 1.3rem}
+.auditoria-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem;margin-bottom:1rem}
+.auditoria-card{border:1px solid var(--border);border-radius:8px;padding:.7rem;background:var(--surface2)}
+.auditoria-card span{display:block;color:var(--text-muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.05em}
+.auditoria-card strong{display:block;margin-top:.3rem;font-size:1.15rem;color:var(--text)}
+.auditoria-card.ok{border-color:rgba(21,128,61,.35);background:#eefaf1}
+.auditoria-card.warn{border-color:rgba(245,158,11,.35);background:#fffaf0}
+.auditoria-issue{display:flex;align-items:flex-start;gap:.55rem;padding:.6rem .7rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);margin-bottom:.45rem}
+.auditoria-issue i{color:#b3542c;margin-top:.15rem}
+.auditoria-issue b{display:block;font-size:.78rem}
+.auditoria-issue small{display:block;color:var(--text-muted);font-size:.7rem;margin-top:.15rem;word-break:break-word}
+@media(max-width:700px){.auditoria-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -750,6 +853,13 @@ textarea { resize: vertical; min-height: 65px; }
 <!-- ABA ESPELHO -->
 <div id="tab-espelho" class="tab-content active">
   <div class="panel-left">
+
+    <div class="auditoria-toolbar no-print">
+      <button class="btn btn-sec btn-sm" onclick="abrirAuditoriaDados()"><i class="ti ti-shield-check"></i> Validar dados</button>
+      <button class="btn btn-sec btn-sm" id="btnTogglePainel" onclick="togglePainelManual()" style="display:none" title="Ocultar ou mostrar o painel lateral">
+        <i class="ti ti-eye-off"></i> Ocultar painel
+      </button>
+    </div>
 
     <div class="search-bar">
       <i class="ti ti-search"></i>
@@ -998,15 +1108,51 @@ textarea { resize: vertical; min-height: 65px; }
       </div>
       <div class="atd-filtro-grupo">
         <label>Empresa</label>
-        <select id="atdFiltroEmpresa" onchange="renderAtendimentos()"><option value="">Todas as Empresas</option></select>
+        <div class="atd-check-dropdown" id="atdDropEmpresa">
+          <button type="button" class="atd-check-trigger" onclick="toggleAtdCheckDropdown('Empresa')">
+            <span id="atdCheckLabelEmpresa">Todas as Empresas</span>
+            <i class="ti ti-chevron-down"></i>
+          </button>
+          <div class="atd-check-panel" id="atdCheckPanelEmpresa">
+            <div class="atd-check-panel-actions">
+              <button type="button" onclick="atdCheckSelecionarTodas('Empresa')">Selecionar todas</button>
+              <button type="button" onclick="atdCheckLimpar('Empresa')">Limpar</button>
+            </div>
+            <div class="atd-check-list" id="atdCheckListEmpresa"></div>
+          </div>
+        </div>
       </div>
       <div class="atd-filtro-grupo">
         <label>Tipo de Visita</label>
-        <select id="atdFiltroTipo" onchange="renderAtendimentos()"><option value="">Todos os Tipos</option></select>
+        <div class="atd-check-dropdown" id="atdDropTipo">
+          <button type="button" class="atd-check-trigger" onclick="toggleAtdCheckDropdown('Tipo')">
+            <span id="atdCheckLabelTipo">Todos os Tipos</span>
+            <i class="ti ti-chevron-down"></i>
+          </button>
+          <div class="atd-check-panel" id="atdCheckPanelTipo">
+            <div class="atd-check-panel-actions">
+              <button type="button" onclick="atdCheckSelecionarTodas('Tipo')">Selecionar todos</button>
+              <button type="button" onclick="atdCheckLimpar('Tipo')">Limpar</button>
+            </div>
+            <div class="atd-check-list" id="atdCheckListTipo"></div>
+          </div>
+        </div>
       </div>
       <div class="atd-filtro-grupo">
         <label>Mídia</label>
-        <select id="atdFiltroMidia" onchange="renderAtendimentos()"><option value="">Todas as Mídias</option></select>
+        <div class="atd-check-dropdown" id="atdDropMidia">
+          <button type="button" class="atd-check-trigger" onclick="toggleAtdCheckDropdown('Midia')">
+            <span id="atdCheckLabelMidia">Todas as Mídias</span>
+            <i class="ti ti-chevron-down"></i>
+          </button>
+          <div class="atd-check-panel" id="atdCheckPanelMidia">
+            <div class="atd-check-panel-actions">
+              <button type="button" onclick="atdCheckSelecionarTodas('Midia')">Selecionar todas</button>
+              <button type="button" onclick="atdCheckLimpar('Midia')">Limpar</button>
+            </div>
+            <div class="atd-check-list" id="atdCheckListMidia"></div>
+          </div>
+        </div>
       </div>
       <div class="atd-filtro-grupo" style="flex:1; min-width:180px;">
         <label>Buscar Nome/Corretor</label>
@@ -1058,6 +1204,7 @@ textarea { resize: vertical; min-height: 65px; }
     </div>
     <div class="topbar-actions no-print">
       <button class="btn ghost" id="resetBtn">↺ Novo cliente</button>
+      <button class="btn" id="cenariosBtn">📌 Cenários <span id="cenariosCount" style="display:none"></span></button>
       <button class="btn" id="clientModeBtn">🖥 Modo cliente</button>
       <button class="btn primary" id="printBtn">🖨 Imprimir / PDF</button>
     </div>
@@ -1106,7 +1253,7 @@ textarea { resize: vertical; min-height: 65px; }
       </div>
       <div id="valorTotalWrap" class="field">
         <label>Valor total da proposta (R$)</label>
-        <input id="valorTotal" type="text" inputmode="decimal" value="1000000">
+        <input id="valorTotal" type="text" inputmode="decimal" value="0">
       </div>
       <div id="valorM2Wrap" style="display:none">
         <div class="row2">
@@ -1260,6 +1407,19 @@ textarea { resize: vertical; min-height: 65px; }
       <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn" id="pvFixOpenBtn" style="align-self:flex-start;display:none">⚖ Zerar desconto no PV</button>
         <button class="btn" id="marginOpenBtn" style="align-self:flex-start;display:none">🎯 Margem no PV</button>
+      </div>
+
+      <div class="panel no-print" id="cenariosPanel" style="display:none">
+        <h2 style="display:flex;justify-content:space-between;align-items:center">
+          <span>Cenários salvos neste atendimento</span>
+          <button class="btn ghost" id="cenariosClose" style="padding:4px 8px">×</button>
+        </h2>
+        <div class="hint">Ficam guardados neste navegador, pra comparar variações durante o mesmo atendimento — não sincronizam com a planilha nem com outros dispositivos, e são apagados se limpar os dados do navegador.</div>
+        <div style="display:flex;gap:8px;margin:12px 0">
+          <input id="cenarioNomeInput" type="text" placeholder="Nome do cenário (ex: 20% de entrada)" style="flex:1">
+          <button class="btn primary" id="cenarioSalvarBtn">💾 Salvar cenário atual</button>
+        </div>
+        <div id="cenariosLista"></div>
       </div>
 
       <div class="timeline-panel">
@@ -1682,10 +1842,32 @@ function resetEstadoEspelho(){
   torreAtiva = 'Todas';
   selectedUnitId = null;
   filtroStatusAtivo = null;
+  sidebarManualHidden = false;
   clientesOcultos = false;
   esconderUnidades = false;
   const search = document.getElementById('searchInput');
   if (search) search.value = '';
+  atualizarVisibilidadePainel();
+}
+
+// Mostra o painel lateral do espelho (#painelDireto) só quando há uma unidade ou
+// card de status selecionado; também respeita o botão de ocultar manual.
+function atualizarVisibilidadePainel() {
+  const tab = document.getElementById('tab-espelho');
+  if (!tab) return;
+  const temConteudo = !!selectedUnitId || !!filtroStatusAtivo;
+  tab.classList.toggle('painel-oculto', !temConteudo || sidebarManualHidden);
+  const btn = document.getElementById('btnTogglePainel');
+  if (!btn) return;
+  btn.style.display = temConteudo ? '' : 'none';
+  btn.innerHTML = sidebarManualHidden
+    ? '<i class="ti ti-eye"></i> Mostrar painel'
+    : '<i class="ti ti-eye-off"></i> Ocultar painel';
+}
+
+function togglePainelManual() {
+  sidebarManualHidden = !sidebarManualHidden;
+  atualizarVisibilidadePainel();
 }
 
 function montarTorreSwitch(){
@@ -1726,6 +1908,7 @@ const ORIGENS_VENDA = ["Online", "Diretoria", "Carteira", "Carteira (Parcerias)"
 // ═══════════════════════════════════════════════════════════════════
 var units = [];
 var selectedUnitId = null;
+var sidebarManualHidden = false; // usuário ocultou manualmente o painel lateral do espelho (botão "Ocultar painel")
 var clientesOcultos = false;
 var esconderUnidades = false;
 var torreAtiva = 'Todas';
@@ -1795,6 +1978,7 @@ function switchTab(tabName, event) {
   if (tabName === 'financeiro') renderFinanceiro();
   if (tabName === 'resumo') renderResumoExecutivo();
   if (tabName === 'atendimentos') carregarAtendimentos();
+  if (tabName === 'simulador' && typeof renderCenariosLista === 'function') renderCenariosLista();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2052,6 +2236,7 @@ function filtrarPorStatus(statusKey) {
     filtroStatusAtivo = statusKey;
     document.getElementById('searchInput').value = '';
     selectedUnitId = null;
+    sidebarManualHidden = false; // selecionar um card sempre reabre o painel, mesmo se estava oculto manualmente
   }
   document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('kpi-active'));
   if (filtroStatusAtivo) {
@@ -2089,6 +2274,7 @@ function unidadeSubtitulo(u){
 
 function renderRelatorioFiltro() {
   const panel = document.getElementById('painelDireto');
+  atualizarVisibilidadePainel();
   if (!filtroStatusAtivo) {
     if (!selectedUnitId) {
       panel.innerHTML = `<div class="painel-vazio"><i class="ti ti-building-store"></i><p>Selecione uma unidade no espelho<br>para editar status, esteira e fluxo financeiro.</p></div>`;
@@ -2329,6 +2515,7 @@ function toggleClientesOcultos() {
 function selectUnit(id) {
   selectedUnitId = id;
   filtroStatusAtivo = null;
+  sidebarManualHidden = false; // selecionar uma unidade sempre reabre o painel, mesmo se estava oculto manualmente
   document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('kpi-active'));
   aplicarFiltros();
   renderEspelho();
@@ -2338,6 +2525,7 @@ function selectUnit(id) {
 function renderGaveta(id) {
   const u = units.find(x => String(x.id_unidade) === String(id));
   if (!u) return;
+  atualizarVisibilidadePainel();
   const panel = document.getElementById("painelDireto");
   const totalAtual = u.fluxo_financeiro.reduce((s, f) => s + (parseFloat(f.valor) || 0), 0);
   const subInfo = u.torre ? `${u.tipo} · ${u.metragem}m² · ${u.vagas||'—'} vagas · ` : `${u.tipo} · ${u.metragem}m² · `;
@@ -2629,6 +2817,13 @@ function aplicarFiltroSemanaPadrao() {
   document.getElementById('atdFiltroAte').value = ate;
 }
 
+// fetch com timeout — sem isso, se o Apps Script não responder (rede, permissão revogada, URL
+// errada), a tela ficava presa em "Carregando atendimentos..." pra sempre, sem nenhum aviso.
+function fetchComTimeout(url, ms){
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), ms);
+  return fetch(url, {signal: ctrl.signal}).finally(()=>clearTimeout(timer));
+}
 async function carregarAtendimentos(forcar) {
   const url = PROJETO_ATIVO.atendimentosScriptUrl;
   const tbody = document.getElementById('atdTbody');
@@ -2645,7 +2840,7 @@ async function carregarAtendimentos(forcar) {
   }
   tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">Carregando atendimentos...</td></tr>`;
   try {
-    const resp = await fetch(url);
+    const resp = await fetchComTimeout(url, 12000);
     const result = await resp.json();
     if (result && result.status === 'success' && Array.isArray(result.data)) {
       atendimentosData = result.data.map(r => ({
@@ -2666,11 +2861,12 @@ async function carregarAtendimentos(forcar) {
       montarFiltrosAtendimentos();
       renderAtendimentos();
     } else {
-      tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">Resposta inesperada da planilha de atendimentos.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">A planilha respondeu em formato inesperado. Clique em "Atualizar" para tentar novamente.</td></tr>`;
     }
   } catch (e) {
     console.error(e);
-    tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">Não foi possível conectar à planilha de atendimentos.</td></tr>`;
+    const motivo = e && e.name === 'AbortError' ? 'A planilha de atendimentos demorou demais para responder' : 'Não foi possível conectar à planilha de atendimentos';
+    tbody.innerHTML = `<tr><td colspan="9" class="atd-vazio">${motivo}. Clique em "Atualizar" para tentar novamente.</td></tr>`;
   }
 }
 
@@ -2680,28 +2876,92 @@ var atdChartEmpresaObj = null, atdChartTipoObj = null;
 const ATD_ICONES_EMPRESA = ['ti-building-store', 'ti-home', 'ti-users-group', 'ti-trending-up', 'ti-briefcase', 'ti-building'];
 const ATD_CORES_KPI = ['kpiv2-icon-green', 'kpiv2-icon-amber', 'kpiv2-icon-red', 'kpiv2-icon-blue', 'kpiv2-icon-purple'];
 
+// ══════════ FILTROS DE ATENDIMENTOS EM CHECKBOX (Empresa/Tipo/Mídia) ══════════
+// Trocado do <select multiple> nativo (confuso — selecionar sem Ctrl/Cmd apagava a seleção
+// anterior e dava a impressão de que a lista "travava") por um dropdown com checkboxes,
+// no estilo do dashboard de referência. atdMultiValues/atdMultiSet continuam existindo com
+// a mesma assinatura de antes (id do campo antigo) só que agora leem/escrevem nesse estado,
+// pra não precisar mexer em renderAtendimentos()/exportarAtendimentosCSV().
+const ATD_CHECK_ID_TO_CAMPO = { atdFiltroEmpresa: 'Empresa', atdFiltroTipo: 'Tipo', atdFiltroMidia: 'Midia' };
+const ATD_CHECK_ROTULO_TODAS = { Empresa: 'Todas as Empresas', Tipo: 'Todos os Tipos', Midia: 'Todas as Mídias' };
+let atdCheckSelecionados = { Empresa: [], Tipo: [], Midia: [] };
+let atdCheckOpcoesDisponiveis = { Empresa: [], Tipo: [], Midia: [] };
+
+function atdMultiValues(id){
+  const campo = ATD_CHECK_ID_TO_CAMPO[id];
+  return campo ? (atdCheckSelecionados[campo] || []).slice() : [];
+}
+function atdMultiSet(id, values){
+  const campo = ATD_CHECK_ID_TO_CAMPO[id];
+  if(!campo) return;
+  atdCheckSelecionados[campo] = (values || []).slice();
+  atdCheckRenderLista(campo);
+  atdCheckAtualizarLabel(campo);
+}
+
+function atdCheckRenderLista(campo){
+  const wrap = document.getElementById('atdCheckList' + campo);
+  if(!wrap) return;
+  const opcoes = atdCheckOpcoesDisponiveis[campo] || [];
+  const selecionados = new Set(atdCheckSelecionados[campo] || []);
+  wrap.innerHTML = opcoes.length
+    ? opcoes.map(op => `<label class="atd-check-item"><input type="checkbox" value="${op}" ${selecionados.has(op) ? 'checked' : ''} onchange="atdCheckToggle('${campo}', this)"> ${op}</label>`).join('')
+    : '<div class="atd-check-empty">Nenhuma opção disponível ainda.</div>';
+}
+function atdCheckAtualizarLabel(campo){
+  const label = document.getElementById('atdCheckLabel' + campo);
+  if(!label) return;
+  const sel = atdCheckSelecionados[campo] || [];
+  if(!sel.length) label.textContent = ATD_CHECK_ROTULO_TODAS[campo];
+  else if(sel.length === 1) label.textContent = sel[0];
+  else label.textContent = sel.length + ' selecionadas';
+}
+function atdCheckToggle(campo, inputEl){
+  const set = new Set(atdCheckSelecionados[campo] || []);
+  if(inputEl.checked) set.add(inputEl.value); else set.delete(inputEl.value);
+  atdCheckSelecionados[campo] = [...set];
+  atdCheckAtualizarLabel(campo);
+  renderAtendimentos();
+}
+function atdCheckSelecionarTodas(campo){
+  atdCheckSelecionados[campo] = (atdCheckOpcoesDisponiveis[campo] || []).slice();
+  atdCheckRenderLista(campo);
+  atdCheckAtualizarLabel(campo);
+  renderAtendimentos();
+}
+function atdCheckLimpar(campo){
+  atdCheckSelecionados[campo] = [];
+  atdCheckRenderLista(campo);
+  atdCheckAtualizarLabel(campo);
+  renderAtendimentos();
+}
+function toggleAtdCheckDropdown(campo){
+  const painel = document.getElementById('atdCheckPanel' + campo);
+  if(!painel) return;
+  const abrir = !painel.classList.contains('open');
+  document.querySelectorAll('.atd-check-panel.open').forEach(p => p.classList.remove('open'));
+  if(abrir) painel.classList.add('open');
+}
+document.addEventListener('click', e => {
+  if(!e.target.closest('.atd-check-dropdown')) document.querySelectorAll('.atd-check-panel.open').forEach(p => p.classList.remove('open'));
+});
+
 function montarFiltrosAtendimentos() {
   const tipos = [...new Set(atendimentosData.map(a => a.tipo_visita).filter(Boolean))].sort();
   const midias = [...new Set(atendimentosData.map(a => a.midia).filter(Boolean))].sort();
   ATD_EMPRESAS_LISTA = [...new Set(atendimentosData.map(a => a.empresa).filter(Boolean))].sort();
 
-  const selTipo = document.getElementById('atdFiltroTipo');
-  const selMidia = document.getElementById('atdFiltroMidia');
-  const selEmpresa = document.getElementById('atdFiltroEmpresa');
-  const valTipoAtual = selTipo.value, valMidiaAtual = selMidia.value, valEmpresaAtual = selEmpresa.value;
-  selTipo.innerHTML = '<option value="">Todos os Tipos</option>' + tipos.map(t => `<option value="${t}">${t}</option>`).join('');
-  selMidia.innerHTML = '<option value="">Todas as Mídias</option>' + midias.map(m => `<option value="${m}">${m}</option>`).join('');
-  selEmpresa.innerHTML = '<option value="">Todas as Empresas</option>' + ATD_EMPRESAS_LISTA.map(e => `<option value="${e}">${e}</option>`).join('');
-  selTipo.value = tipos.includes(valTipoAtual) ? valTipoAtual : '';
-  selMidia.value = midias.includes(valMidiaAtual) ? valMidiaAtual : '';
-  selEmpresa.value = ATD_EMPRESAS_LISTA.includes(valEmpresaAtual) ? valEmpresaAtual : '';
+  atdCheckOpcoesDisponiveis = { Empresa: ATD_EMPRESAS_LISTA, Tipo: tipos, Midia: midias };
+  // mantém a seleção anterior, descartando só o que não existe mais na base recarregada
+  atdCheckSelecionados.Empresa = (atdCheckSelecionados.Empresa || []).filter(v => ATD_EMPRESAS_LISTA.includes(v));
+  atdCheckSelecionados.Tipo = (atdCheckSelecionados.Tipo || []).filter(v => tipos.includes(v));
+  atdCheckSelecionados.Midia = (atdCheckSelecionados.Midia || []).filter(v => midias.includes(v));
+  ['Empresa', 'Tipo', 'Midia'].forEach(campo => { atdCheckRenderLista(campo); atdCheckAtualizarLabel(campo); });
 }
 
 function limparFiltrosAtendimentos() {
   aplicarFiltroSemanaPadrao(); // "limpar" volta pro padrão (última semana completa), não pro vazio
-  document.getElementById('atdFiltroTipo').value = '';
-  document.getElementById('atdFiltroMidia').value = '';
-  document.getElementById('atdFiltroEmpresa').value = '';
+  ['Empresa', 'Tipo', 'Midia'].forEach(campo => { atdCheckSelecionados[campo] = []; atdCheckRenderLista(campo); atdCheckAtualizarLabel(campo); });
   document.getElementById('atdFiltroBusca').value = '';
   renderAtendimentos();
 }
@@ -2712,18 +2972,18 @@ function renderAtendimentos() {
 
   const de = document.getElementById('atdFiltroDe').value ? new Date(document.getElementById('atdFiltroDe').value + 'T00:00:00') : null;
   const ate = document.getElementById('atdFiltroAte').value ? new Date(document.getElementById('atdFiltroAte').value + 'T23:59:59') : null;
-  const tipoSel = document.getElementById('atdFiltroTipo').value;
-  const midiaSel = document.getElementById('atdFiltroMidia').value;
-  const empresaSel = document.getElementById('atdFiltroEmpresa').value;
+  const tipoSel = atdMultiValues('atdFiltroTipo');
+  const midiaSel = atdMultiValues('atdFiltroMidia');
+  const empresaSel = atdMultiValues('atdFiltroEmpresa');
   const busca = document.getElementById('atdFiltroBusca').value.trim().toLowerCase();
 
   const comData = atendimentosData.map(a => ({ ...a, _data: parseDataAtendimento(a.data) }));
   const filtrados = comData.filter(a => {
     if (de && (!a._data || a._data < de)) return false;
     if (ate && (!a._data || a._data > ate)) return false;
-    if (tipoSel && a.tipo_visita !== tipoSel) return false;
-    if (midiaSel && a.midia !== midiaSel) return false;
-    if (empresaSel && a.empresa !== empresaSel) return false;
+    if (tipoSel.length && !tipoSel.includes(a.tipo_visita)) return false;
+    if (midiaSel.length && !midiaSel.includes(a.midia)) return false;
+    if (empresaSel.length && !empresaSel.includes(a.empresa)) return false;
     if (busca) {
       const alvo = `${a.nome} ${a.corretor_atendimento} ${a.corretor_origem}`.toLowerCase();
       if (!alvo.includes(busca)) return false;
@@ -3144,6 +3404,9 @@ function refreshUnidadeInfo(){
   const nominalTabela = rsm2 * un.m;
   setNum('metragemRef', un.m); setNum('metragemM2', un.m); setNum('metragemCustom', un.m);
   if(!manual){ setNum('valorReferencia', nominalTabela, 0); setNum('valorReferenciaCustom', nominalTabela, 0); }
+  // Ao escolher a unidade, o valor total da proposta já entra com o preço de tabela dela
+  // (evita simular sem querer com o valor genérico de outro cliente que ficou digitado ali)
+  if(valueMode==='total') document.getElementById('valorTotal').value = Math.round(nominalTabela).toLocaleString('pt-BR');
   hint.innerHTML = 'Unidade '+un.label+' — área privativa total '+un.m.toLocaleString('pt-BR',{minimumFractionDigits:2})+' m² · '+
     (fase==='pre'?'Pré-lançamento':'Lançamento')+': '+fmtBRL2(rsm2)+'/m² → valor de tabela '+fmtBRLsim(nominalTabela)+'.';
   hint.className = 'hint strip no-print';
@@ -3670,7 +3933,7 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
   const cfg = window.PROJETO_ATIVO.simulador;
   document.getElementById('clienteNome').value='';
   document.getElementById('corretorNome').value='';
-  document.getElementById('valorTotal').value=String(cfg.valorTotalDefault);
+  document.getElementById('valorTotal').value='0'; // sem unidade escolhida, o valor começa zerado (nada de cfg.valorTotalDefault genérico)
   document.getElementById('unidadeSelect').value='';
   document.getElementById('manualRefToggle').checked=false;
   document.getElementById('valorReferencia').readOnly=true;
@@ -3681,6 +3944,158 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
   document.getElementById('pvFixPanel').style.display='none';
   montarCustomRowsDoProjeto();
   refreshUnidadeInfo();
+});
+
+// ---------- CENÁRIOS (guardados no navegador, por projeto — úteis pra comparar variações
+// durante o mesmo atendimento; não sincronizam com a planilha nem com outros dispositivos) ----------
+function cenariosStorageKey(){
+  const prefix = (window.PROJETO_ATIVO && window.PROJETO_ATIVO.exportPrefix) || 'Quaddra';
+  return 'quaddra_cenarios_' + prefix;
+}
+function lerCenarios(){
+  try { return JSON.parse(localStorage.getItem(cenariosStorageKey()) || '[]'); }
+  catch(e){ console.error('Erro ao ler cenários salvos:', e); return []; }
+}
+// Retorna true/false — antes falhava em silêncio (ex: navegador com armazenamento local
+// bloqueado/cheio, aba anônima restrita), o botão dizia "cenário salvo" mesmo sem ter salvo
+// nada de verdade. Agora quem chama consegue avisar o usuário quando isso acontecer.
+function gravarCenarios(lista){
+  try { localStorage.setItem(cenariosStorageKey(), JSON.stringify(lista)); return true; }
+  catch(e){ console.error('Erro ao salvar cenário (localStorage indisponível?):', e); return false; }
+}
+
+// Todos os campos do simulador (cliente/unidade + fluxo padrão + mês a mês) que entram no
+// "estado" de um cenário — salvar/carregar cobre a simulação inteira, não só o valor total.
+const CENARIO_CAMPOS_IDS = [
+  'clienteNome','unidadeSelect','faseSelect','corretorNome','dataProposta',
+  'valorTotal','valorM2','metragemM2','metragemRef',
+  'campoEntrada','campoJanela','campoMensais',
+  'reforcoExtraToggle','reforcoExtraPct','reforcoExtraData',
+  'campoAnuais','campoMilestone0','campoMilestone1',
+  'dataAto','numMensais','primeiroReforco','intervaloReforco',
+  'tabPrimeiroReforco','tabIntervaloReforco',
+  'manualRefToggle','valorReferencia',
+  'metragemCustom','dataBaseCustom','dataEntregaCustom','taxaAnualCustom','valorReferenciaCustom',
+  'taxaAnual'
+];
+
+function capturarEstadoSimulador(){
+  const campos = {};
+  CENARIO_CAMPOS_IDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    campos[id] = el.type==='checkbox' ? el.checked : el.value;
+  });
+  return {
+    activeFlow, valueMode, campos,
+    customRows: JSON.parse(JSON.stringify(customRows)),
+    pvFix: pvFix ? JSON.parse(JSON.stringify(pvFix)) : null
+  };
+}
+
+function aplicarEstadoSimulador(estado){
+  if(!estado) return;
+  activeFlow = estado.activeFlow || 'padrao';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.flow===activeFlow));
+  document.getElementById('panelPadrao').style.display = activeFlow==='padrao' ? 'block':'none';
+  document.getElementById('panelCustom').style.display = activeFlow==='custom' ? 'block':'none';
+
+  valueMode = estado.valueMode || 'total';
+  document.querySelectorAll('#panelPadrao .toggle-group button').forEach(b=>b.classList.toggle('active', b.dataset.mode===valueMode));
+  document.getElementById('valorTotalWrap').style.display = valueMode==='total' ? 'block':'none';
+  document.getElementById('valorM2Wrap').style.display = valueMode==='m2' ? 'block':'none';
+
+  Object.entries(estado.campos||{}).forEach(([id,val])=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.type==='checkbox') el.checked = !!val; else el.value = val;
+  });
+
+  // campos derivados de toggles (readOnly/disabled/visibilidade) que não são disparados
+  // automaticamente por só reatribuir .value/.checked acima
+  const manual = document.getElementById('manualRefToggle').checked;
+  document.getElementById('valorReferencia').readOnly = !manual;
+  document.getElementById('valorReferenciaCustom').readOnly = !manual;
+  const reforco = document.getElementById('reforcoExtraToggle').checked;
+  document.getElementById('reforcoExtraPct').disabled = !reforco;
+  document.getElementById('reforcoExtraFields').style.display = reforco ? 'block' : 'none';
+  if(typeof updateReforcoExtraLabel==='function') updateReforcoExtraLabel();
+
+  customRows = Array.isArray(estado.customRows) ? JSON.parse(JSON.stringify(estado.customRows)) : [];
+  renderCustomRows();
+
+  pvFix = estado.pvFix ? JSON.parse(JSON.stringify(estado.pvFix)) : null;
+  document.getElementById('pvFixPanel').style.display = 'none';
+
+  render();
+}
+
+function renderCenariosLista(){
+  const wrap = document.getElementById('cenariosLista');
+  const badge = document.getElementById('cenariosCount');
+  if(!wrap) return;
+  const lista = lerCenarios();
+  badge.style.display = lista.length ? 'inline' : 'none';
+  badge.textContent = lista.length ? String(lista.length) : '';
+  if(!lista.length){ wrap.innerHTML = '<div class="hint" style="margin-top:4px">Nenhum cenário salvo ainda neste atendimento.</div>'; return; }
+  wrap.innerHTML = lista.map((c,i)=>{
+    const data = new Date(c.criadoEm);
+    const dataFmt = isNaN(data) ? '' : data.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-top:1px solid var(--line-soft)">
+      <div>
+        <strong style="font-size:13px">${c.nome}</strong>
+        <div class="hint" style="margin:2px 0 0">${c.resumo} · ${dataFmt}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn" data-cenario-carregar="${i}">▶ Carregar</button>
+        <button class="btn ghost" data-cenario-remover="${i}">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-cenario-carregar]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const lista = lerCenarios();
+      const c = lista[+btn.dataset.cenarioCarregar];
+      if(!c) return;
+      aplicarEstadoSimulador(c.estado);
+      showToast(`Cenário "${c.nome}" carregado.`, 'success');
+      document.getElementById('cenariosPanel').style.display = 'none';
+    });
+  });
+  wrap.querySelectorAll('[data-cenario-remover]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const lista = lerCenarios();
+      lista.splice(+btn.dataset.cenarioRemover, 1);
+      gravarCenarios(lista);
+      renderCenariosLista();
+    });
+  });
+}
+window.renderCenariosLista = renderCenariosLista;
+
+document.getElementById('cenariosBtn').addEventListener('click', ()=>{
+  const painel = document.getElementById('cenariosPanel');
+  const abrir = painel.style.display === 'none';
+  painel.style.display = abrir ? 'block' : 'none';
+  if(abrir) renderCenariosLista();
+});
+document.getElementById('cenariosClose').addEventListener('click', ()=>{ document.getElementById('cenariosPanel').style.display = 'none'; });
+document.getElementById('cenarioSalvarBtn').addEventListener('click', ()=>{
+  const nomeInput = document.getElementById('cenarioNomeInput');
+  const lista = lerCenarios();
+  const nome = nomeInput.value.trim() || `Cenário ${lista.length+1}`;
+  const valorAtual = activeFlow==='padrao' ? getUnitValuePadrao() : num('valorReferenciaCustom');
+  const unidadeTxt = document.getElementById('unidadeSelect').selectedOptions[0]?.textContent || 'sem unidade';
+  const resumo = `${fmtBRLsim(valorAtual)} · ${activeFlow==='padrao' ? 'Fluxo padrão' : 'Mês a mês'} · ${unidadeTxt}`;
+  lista.unshift({ nome, resumo, criadoEm: new Date().toISOString(), estado: capturarEstadoSimulador() });
+  const salvouOk = gravarCenarios(lista.slice(0,30));
+  if(!salvouOk){
+    showToast('Não foi possível salvar o cenário — o armazenamento local deste navegador está bloqueado ou cheio (comum em aba anônima). Tente numa aba normal.', 'error', 6000);
+    return;
+  }
+  nomeInput.value = '';
+  renderCenariosLista();
+  showToast(`Cenário "${nome}" salvo.`, 'success');
 });
 
 // ---------- MONTAGEM DOS CAMPOS DO SIMULADOR CONFORME O PROJETO ATIVO ----------
@@ -3732,7 +4147,7 @@ function montarCamposSimulador(){
     if (temMilestone2) document.getElementById(prefix+'Milestone1').value = termos.milestone1;
   });
 
-  document.getElementById('valorTotal').value = cfg.valorTotalDefault;
+  document.getElementById('valorTotal').value = '0'; // idem — só entra com valor real quando uma unidade é escolhida
   document.getElementById('valorM2').value = cfg.valorM2Default;
   document.getElementById('metragemRef').value = cfg.metragemDefault;
   document.getElementById('metragemM2').value = cfg.metragemDefault;
@@ -3766,6 +4181,76 @@ function montarCamposSimulador(){
 window.montarCamposSimulador = montarCamposSimulador;
 
 })();
+</script>
+
+<div id="auditoriaModal" class="auditoria-modal-backdrop" onclick="if(event.target===this) fecharAuditoriaDados()">
+  <div class="auditoria-modal" role="dialog" aria-modal="true" aria-labelledby="auditoriaModalTitulo">
+    <div class="auditoria-head">
+      <div>
+        <h2 id="auditoriaModalTitulo">Auditoria de dados</h2>
+        <p id="auditoriaModalSub">Verificação rápida da base carregada.</p>
+      </div>
+      <button class="auditoria-close" onclick="fecharAuditoriaDados()" aria-label="Fechar"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="auditoria-body" id="auditoriaModalBody"></div>
+  </div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  AUDITORIA DE DADOS — checagem rápida da base carregada (só leitura,
+//  não altera nada na planilha; útil pra pegar erro de cadastro antes
+//  que ele vire um problema num atendimento ou numa proposta).
+// ═══════════════════════════════════════════════════════════════════
+function auditarDadosQuaddra() {
+  const data = Array.isArray(units) ? units : [];
+  const ids = data.map(u => String(u.id_unidade || ''));
+  const duplicados = ids.filter((id, i) => id && ids.indexOf(id) !== i).filter((v, i, a) => a.indexOf(v) === i);
+  // resolverValorTabela() é a mesma função que o resto do app usa pra achar o preço de uma
+  // unidade — cobre tanto projeto com valor_tabela pronto (Lorena) quanto por m² via
+  // pricingTable (Jesuíno, onde valor_tabela fica null de propósito). Checar só u.valor_tabela
+  // aqui acusaria as 33 unidades do Jesuíno como "sem valor" por engano.
+  const semValor = data.filter(u => !(resolverValorTabela(u) > 0) && !(Array.isArray(u.fluxo_financeiro) && u.fluxo_financeiro.some(f => Number(f.valor) > 0)));
+  const semMetragem = data.filter(u => !(Number(u.metragem) > 0));
+  const statusInvalido = data.filter(u => !STATUS_CONFIG[u.status_espelho]);
+  const temMultiplasTorres = PROJETO_ATIVO && Array.isArray(PROJETO_ATIVO.torres) && PROJETO_ATIVO.torres.length > 1;
+  const semTorre = temMultiplasTorres ? data.filter(u => !u.torre) : [];
+  return {
+    total: data.length, duplicados, semValor, semMetragem, statusInvalido, semTorre,
+    ok: !duplicados.length && !semValor.length && !semMetragem.length && !statusInvalido.length && !semTorre.length
+  };
+}
+
+function auditoriaMarkup() {
+  const a = auditarDadosQuaddra();
+  const card = (label, value, kind) => `<div class="auditoria-card ${kind}"><span>${label}</span><strong>${value}</strong></div>`;
+  const listarIds = (lista, max) => lista.slice(0, max).map(u => u.id_unidade).join(', ') + (lista.length > max ? '…' : '');
+  const issues = [];
+  if (a.duplicados.length) issues.push(`<div class="auditoria-issue"><i class="ti ti-alert-triangle"></i><div><b>IDs de unidade duplicados</b><small>${a.duplicados.join(', ')}</small></div></div>`);
+  if (a.semValor.length) issues.push(`<div class="auditoria-issue"><i class="ti ti-currency-real"></i><div><b>${a.semValor.length} unidade(s) sem valor de referência</b><small>${listarIds(a.semValor, 14)}</small></div></div>`);
+  if (a.semMetragem.length) issues.push(`<div class="auditoria-issue"><i class="ti ti-ruler-2"></i><div><b>${a.semMetragem.length} unidade(s) sem metragem cadastrada</b><small>${listarIds(a.semMetragem, 14)}</small></div></div>`);
+  if (a.statusInvalido.length) issues.push(`<div class="auditoria-issue"><i class="ti ti-tag-off"></i><div><b>${a.statusInvalido.length} unidade(s) com status desconhecido</b><small>${listarIds(a.statusInvalido, 14)}</small></div></div>`);
+  if (a.semTorre.length) issues.push(`<div class="auditoria-issue"><i class="ti ti-building"></i><div><b>${a.semTorre.length} unidade(s) sem torre identificada</b><small>${listarIds(a.semTorre, 14)}</small></div></div>`);
+  return `<div class="auditoria-grid">
+      ${card('Unidades analisadas', a.total, 'ok')}
+      ${card('IDs duplicados', a.duplicados.length, a.duplicados.length ? 'error' : 'ok')}
+      ${card('Sem valor', a.semValor.length, a.semValor.length ? 'warn' : 'ok')}
+      ${card('Sem metragem', a.semMetragem.length, a.semMetragem.length ? 'warn' : 'ok')}
+    </div>
+    <div>${issues.join('') || '<div class="auditoria-issue"><i class="ti ti-circle-check"></i><div><b>Nenhum problema encontrado</b><small>IDs, status, metragem e valores principais estão preenchidos.</small></div></div>'}</div>`;
+}
+
+function abrirAuditoriaDados() {
+  const modal = document.getElementById('auditoriaModal');
+  if (!modal) return;
+  document.getElementById('auditoriaModalSub').textContent = (PROJETO_ATIVO ? PROJETO_ATIVO.nome : 'Projeto ativo') + ' · dados carregados nesta sessão';
+  document.getElementById('auditoriaModalBody').innerHTML = auditoriaMarkup();
+  modal.classList.add('open');
+}
+function fecharAuditoriaDados() {
+  const modal = document.getElementById('auditoriaModal');
+  if (modal) modal.classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharAuditoriaDados(); });
 </script>
 
 </body>
