@@ -1469,7 +1469,40 @@ function debounce(fn, wait) {
 // ═══════════════════════════════════════════════════════════════════
 //  ÁRVORES DE UNIDADES — dados reais de cada projeto
 // ═══════════════════════════════════════════════════════════════════
+// Monta a lista de unidades do Lorena a partir da TABELA MENSAL (preço + geometria de
+// cada unidade), que normalmente vem de "dados-lorena.json" (carregado em
+// carregarDadosMensais() antes de selecionarProjeto() chegar aqui — ver mais abaixo).
+// Se o arquivo não puder ser baixado (sem internet, arquivo não publicado, etc.), usa
+// o retrato de preços embutido em buildLorenaTabelaFallback() como rede de segurança,
+// pra o backoffice nunca ficar sem unidade nenhuma na tela.
 function buildTorresLorenaTree() {
+  const linhas = (PROJECTS.lorena._unidadesTabela && PROJECTS.lorena._unidadesTabela.length)
+    ? PROJECTS.lorena._unidadesTabela
+    : buildLorenaTabelaFallback();
+  return linhas.map(r => ({
+    id_unidade: r.id_unidade,
+    numero_unidade: r.numero_unidade,
+    torre: r.torre,
+    andar: r.andar,
+    final: r.final,
+    metragem: r.metragem,
+    vagas: r.vagas,
+    valor_tabela: r.valor_tabela,
+    tipo: r.tipo,
+    especial: r.especial || null,
+    status_espelho: "DISPONIVEL",
+    cliente_nome: "",
+    observacoes: "",
+    origem_venda: "",
+    fase_esteira: 1,
+    fluxo_financeiro: []
+  }));
+}
+
+// Rede de segurança: mesma tabela de preços do Lorena, embutida no HTML. Só é usada se
+// "dados-lorena.json" não puder ser carregado (ver carregarDadosMensais()). Pode ficar
+// desatualizada com o tempo — não precisa manter em dia todo mês, é só o último recurso.
+function buildLorenaTabelaFallback() {
   const list = [];
   function addUnidade(torre, prefixo, numero, andar, final, metragem, vagas, valorTabela, tipo, especial) {
     list.push({
@@ -1478,74 +1511,68 @@ function buildTorresLorenaTree() {
       torre, andar, final, metragem, vagas,
       valor_tabela: valorTabela,
       tipo,
-      especial: especial || null,
-      status_espelho: "DISPONIVEL",
-      cliente_nome: "",
-      observacoes: "",
-      origem_venda: "",
-      fase_esteira: 1,
-      fluxo_financeiro: []
+      especial: especial || null
     });
   }
   // ---------- TORRE PARQUE — 14 unidades, só final 1 ----------
-  addUnidade("Parque", "P", 11,  1, 1, 468.19, 5, 14849798, "Garden", "Garden G");
-  addUnidade("Parque", "P", 21,  2, 1, 387.98, 4, 13761123, "Tipo");
-  addUnidade("Parque", "P", 31,  3, 1, 388.96, 4, 14099148, "Tipo");
-  addUnidade("Parque", "P", 41,  4, 1, 388.65, 4, 14390549, "Tipo");
-  addUnidade("Parque", "P", 51,  5, 1, 388.05, 4, 14671460, "Tipo");
-  addUnidade("Parque", "P", 61,  6, 1, 387.98, 4, 14895256, "Tipo");
-  addUnidade("Parque", "P", 71,  7, 1, 388.16, 4, 15128377, "Tipo");
+  addUnidade("Parque", "P", 11,  1, 1, 468.19, 5, 14947806, "Garden", "Garden G");
+  addUnidade("Parque", "P", 21,  2, 1, 387.98, 4, 13851947, "Tipo");
+  addUnidade("Parque", "P", 31,  3, 1, 388.96, 4, 14192203, "Tipo");
+  addUnidade("Parque", "P", 41,  4, 1, 388.65, 4, 14485527, "Tipo");
+  addUnidade("Parque", "P", 51,  5, 1, 388.05, 4, 14768292, "Tipo");
+  addUnidade("Parque", "P", 61,  6, 1, 387.98, 4, 14993565, "Tipo");
+  addUnidade("Parque", "P", 71,  7, 1, 388.16, 4, 15228224, "Tipo");
   addUnidade("Parque", "P", 81,  8, 1, 387.98, 4, 15137544, "Tipo");
-  addUnidade("Parque", "P", 91,  9, 1, 388.29, 4, 15663389, "Tipo");
-  addUnidade("Parque", "P", 101, 10, 1, 388.05, 4, 15955956, "Tipo");
-  addUnidade("Parque", "P", 111, 11, 1, 388.78, 4, 16298341, "Tipo");
+  addUnidade("Parque", "P", 91,  9, 1, 388.29, 4, 15766768, "Tipo");
+  addUnidade("Parque", "P", 101, 10, 1, 388.05, 4, 16061265, "Tipo");
+  addUnidade("Parque", "P", 111, 11, 1, 388.78, 4, 16405910, "Tipo");
   addUnidade("Parque", "P", 121, 12, 1, 387.74, 4, 16469897, "Tipo");
   addUnidade("Parque", "P", 131, 13, 1, 388.29, 4, 16941221, "Tipo");
   addUnidade("Parque", "P", 141, 14, 1, 714.97, 6, 31794821, "Cobertura", "Cobertura");
   // ---------- TORRE JARDINS — 14 unidades, só final 1 ----------
-  addUnidade("Jardins", "J", 11,  1, 1, 595.82, 4, 16978636, "Garden", "Garden P");
-  addUnidade("Jardins", "J", 21,  2, 1, 387.98, 4, 13654617, "Tipo");
+  addUnidade("Jardins", "J", 11,  1, 1, 595.82, 4, 17224003, "Garden", "Garden P");
+  addUnidade("Jardins", "J", 21,  2, 1, 387.98, 4, 13851947, "Tipo");
   addUnidade("Jardins", "J", 31,  3, 1, 388.29, 4, 13881064, "Tipo");
   addUnidade("Jardins", "J", 41,  4, 1, 387.98, 4, 14254884, "Tipo");
-  addUnidade("Jardins", "J", 51,  5, 1, 388.29, 4, 14566004, "Tipo");
+  addUnidade("Jardins", "J", 51,  5, 1, 388.29, 4, 14776505, "Tipo");
   addUnidade("Jardins", "J", 61,  6, 1, 387.98, 4, 14690361, "Tipo");
   addUnidade("Jardins", "J", 71,  7, 1, 388.36, 4, 14928323, "Tipo");
   addUnidade("Jardins", "J", 81,  8, 1, 387.98, 4, 15137544, "Tipo");
   addUnidade("Jardins", "J", 91,  9, 1, 388.29, 4, 15447928, "Tipo");
-  addUnidade("Jardins", "J", 101, 10, 1, 387.80, 4, 15823210, "Tipo");
-  addUnidade("Jardins", "J", 111, 11, 1, 388.29, 4, 16143583, "Tipo");
+  addUnidade("Jardins", "J", 101, 10, 1, 387.80, 4, 16051879, "Tipo");
+  addUnidade("Jardins", "J", 111, 11, 1, 388.29, 4, 16376882, "Tipo");
   addUnidade("Jardins", "J", 121, 12, 1, 387.98, 4, 16480243, "Tipo");
-  addUnidade("Jardins", "J", 131, 13, 1, 388.29, 4, 17044562, "Tipo");
-  addUnidade("Jardins", "J", 141, 14, 1, 714.97, 6, 31988769, "Cobertura", "Cobertura");
+  addUnidade("Jardins", "J", 131, 13, 1, 388.29, 4, 17290881, "Tipo");
+  addUnidade("Jardins", "J", 141, 14, 1, 714.97, 6, 32451054, "Cobertura", "Cobertura");
   // ---------- TORRE EUROPA — 28 unidades, final 1 e final 2 ----------
-  addUnidade("Europa", "E", 11,  1, 1, 300.98, 4, 10440317, "Tipo");
-  addUnidade("Europa", "E", 21,  2, 1, 300.98, 4, 10675769, "Tipo");
-  addUnidade("Europa", "E", 31,  3, 1, 301.05, 4, 10912387, "Tipo");
+  addUnidade("Europa", "E", 11,  1, 1, 300.98, 4, 10509223, "Tipo");
+  addUnidade("Europa", "E", 21,  2, 1, 300.98, 4, 10746229, "Tipo");
+  addUnidade("Europa", "E", 31,  3, 1, 301.05, 4, 10984408, "Tipo");
   addUnidade("Europa", "E", 41,  4, 1, 309.90, 4, 11091056, "Tipo");
   addUnidade("Europa", "E", 51,  5, 1, 300.80, 4, 11216359, "Tipo");
   addUnidade("Europa", "E", 61,  6, 1, 300.98, 4, 11395692, "Tipo");
   addUnidade("Europa", "E", 71,  7, 1, 300.74, 4, 11560081, "Tipo");
   addUnidade("Europa", "E", 81,  8, 1, 301.82, 4, 11776200, "Tipo");
-  addUnidade("Europa", "E", 91,  9, 1, 300.74, 4, 12131609, "Tipo");
+  addUnidade("Europa", "E", 91,  9, 1, 300.74, 4, 12211677, "Tipo");
   addUnidade("Europa", "E", 101, 10, 1, 300.98, 4, 12206140, "Tipo");
-  addUnidade("Europa", "E", 111, 11, 1, 301.05, 4, 12614169, "Tipo");
-  addUnidade("Europa", "E", 121, 12, 1, 302.04, 4, 13008143, "Tipo");
-  addUnidade("Europa", "E", 131, 13, 1, 300.98, 4, 13314697, "Tipo");
-  addUnidade("Europa", "E", 141, 14, 1, 546.81, 5, 24753936, "Cobertura", "Cobertura");
-  addUnidade("Europa", "E", 12,  1, 2, 300.98, 4, 10440317, "Tipo");
-  addUnidade("Europa", "E", 22,  2, 2, 300.98, 4, 10675769, "Tipo");
-  addUnidade("Europa", "E", 32,  3, 2, 300.98, 4, 10910055, "Tipo");
-  addUnidade("Europa", "E", 42,  4, 2, 300.84, 4, 10986445, "Tipo");
+  addUnidade("Europa", "E", 111, 11, 1, 301.05, 4, 12697422, "Tipo");
+  addUnidade("Europa", "E", 121, 12, 1, 302.04, 4, 13093997, "Tipo");
+  addUnidade("Europa", "E", 131, 13, 1, 300.98, 4, 13402574, "Tipo");
+  addUnidade("Europa", "E", 141, 14, 1, 546.81, 5, 24917312, "Cobertura", "Cobertura");
+  addUnidade("Europa", "E", 12,  1, 2, 300.98, 4, 10509223, "Tipo");
+  addUnidade("Europa", "E", 22,  2, 2, 300.98, 4, 10746229, "Tipo");
+  addUnidade("Europa", "E", 32,  3, 2, 300.98, 4, 10982062, "Tipo");
+  addUnidade("Europa", "E", 42,  4, 2, 300.84, 4, 11145215, "Tipo");
   addUnidade("Europa", "E", 52,  5, 2, 300.98, 4, 11222107, "Tipo");
   addUnidade("Europa", "E", 62,  6, 2, 300.98, 4, 11395692, "Tipo");
-  addUnidade("Europa", "E", 72,  7, 2, 301.47, 4, 11750456, "Tipo");
+  addUnidade("Europa", "E", 72,  7, 2, 301.47, 4, 11828009, "Tipo");
   addUnidade("Europa", "E", 82,  8, 2, 309.93, 4, 12092332, "Tipo");
   addUnidade("Europa", "E", 92,  9, 2, 300.80, 4, 11967029, "Tipo");
-  addUnidade("Europa", "E", 102, 10, 2, 300.98, 4, 12376385, "Tipo");
-  addUnidade("Europa", "E", 112, 11, 2, 300.98, 4, 12610672, "Tipo");
-  addUnidade("Europa", "E", 122, 12, 2, 300.98, 4, 12962684, "Tipo");
-  addUnidade("Europa", "E", 132, 13, 2, 300.98, 4, 13314697, "Tipo");
-  addUnidade("Europa", "E", 142, 14, 2, 546.57, 5, 24739949, "Cobertura", "Cobertura");
+  addUnidade("Europa", "E", 102, 10, 2, 300.98, 4, 12458070, "Tipo");
+  addUnidade("Europa", "E", 112, 11, 2, 300.98, 4, 12693902, "Tipo");
+  addUnidade("Europa", "E", 122, 12, 2, 300.98, 4, 13048238, "Tipo");
+  addUnidade("Europa", "E", 132, 13, 2, 300.98, 4, 13402574, "Tipo");
+  addUnidade("Europa", "E", 142, 14, 2, 546.57, 5, 24903233, "Cobertura", "Cobertura");
   return list;
 }
 
@@ -1565,42 +1592,45 @@ function buildJesuinoTree() {
   return list;
 }
 
-// Tabela de preço oficial do Jesuíno (R$/m² por fase) — recalculada a partir das fórmulas
-// reais da planilha ESPELHO + Espelho_2 (ver nota original no simulador do Jesuíno).
-const JESUINO_PRICING = [
-  {u:'281', label:'281 (Duplex)', m:611.40, pre:56529, lanc:58968},
-  {u:'271', label:'271', m:393.43, pre:54095, lanc:56564},
-  {u:'261', label:'261', m:393.43, pre:52776, lanc:55455},
-  {u:'251', label:'251', m:393.51, pre:51488, lanc:54368},
-  {u:'241', label:'241', m:393.05, pre:50479, lanc:53433},
-  {u:'231', label:'231', m:393.05, pre:49489, lanc:52514},
-  {u:'221', label:'221', m:392.72, pre:48519, lanc:51610},
-  {u:'211', label:'211', m:395.01, pre:47567, lanc:50723},
-  {u:'201', label:'201', m:392.72, pre:46635, lanc:49850},
-  {u:'191', label:'191', m:395.01, pre:45720, lanc:48993},
-  {u:'181', label:'181', m:395.01, pre:44824, lanc:48150},
-  {u:'171', label:'171', m:392.72, pre:44270, lanc:47556},
-  {u:'161', label:'161', m:392.99, pre:43724, lanc:46969},
-  {u:'151', label:'151', m:392.72, pre:43184, lanc:46389},
-  {u:'141', label:'141', m:393.36, pre:42968, lanc:46157},
-  {u:'131', label:'131', m:392.72, pre:42753, lanc:45926},
-  {u:'121', label:'121', m:392.57, pre:42539, lanc:45697},
-  {u:'111', label:'111', m:395.01, pre:42327, lanc:45468},
-  {u:'101', label:'101', m:394.93, pre:42115, lanc:45241},
-  {u:'91',  label:'91',  m:394.26, pre:41905, lanc:44902},
-  {u:'81',  label:'81',  m:395.05, pre:41695, lanc:44228},
-  {u:'72',  label:'72 (Duplex)', m:558.07, pre:36310, lanc:37524},
-  {u:'71',  label:'71',  m:389.14, pre:41487, lanc:43565},
-  {u:'62',  label:'62',  m:326.59, pre:41279, lanc:45468},
-  {u:'61',  label:'61',  m:391.98, pre:41279, lanc:42911},
-  {u:'52',  label:'52',  m:331.76, pre:41073, lanc:44902},
-  {u:'51',  label:'51',  m:388.63, pre:41073, lanc:42267},
-  {u:'42',  label:'42',  m:326.75, pre:40867, lanc:43565},
-  {u:'41',  label:'41',  m:393.45, pre:40867, lanc:41633},
-  {u:'32',  label:'32',  m:332.65, pre:40663, lanc:42267},
-  {u:'31',  label:'31',  m:390.10, pre:40663, lanc:41009},
-  {u:'22',  label:'22 (Garden)', m:342.95, pre:34586, lanc:36319},
-  {u:'21',  label:'21 (Garden)', m:475.87, pre:34586, lanc:36319},
+// Rede de segurança: tabela de preço por m² do Jesuíno embutida no HTML, só usada se
+// "dados-jesuino.json" não puder ser carregado (ver carregarDadosMensais()). Normalmente
+// quem vale é o pricingTable carregado do JSON — não precisa manter este fallback em dia
+// todo mês, é só o último recurso. (Recalculada a partir das fórmulas reais da planilha
+// ESPELHO + Espelho_2 — ver nota original no simulador do Jesuíno.)
+const JESUINO_PRICING_FALLBACK = [
+  {u:'281', label:'281 (Duplex)', m:611.40, pre:56670, lanc:59115},
+  {u:'271', label:'271', m:393.43, pre:54230, lanc:56705},
+  {u:'261', label:'261', m:393.43, pre:52908, lanc:55594},
+  {u:'251', label:'251', m:393.51, pre:51617, lanc:54504},
+  {u:'241', label:'241', m:393.05, pre:50605, lanc:53567},
+  {u:'231', label:'231', m:393.05, pre:49613, lanc:52645},
+  {u:'221', label:'221', m:392.72, pre:48640, lanc:51739},
+  {u:'211', label:'211', m:395.01, pre:47686, lanc:50850},
+  {u:'201', label:'201', m:392.72, pre:46752, lanc:49975},
+  {u:'191', label:'191', m:395.01, pre:45834, lanc:49115},
+  {u:'181', label:'181', m:395.01, pre:44936, lanc:48270},
+  {u:'171', label:'171', m:392.72, pre:44381, lanc:47675},
+  {u:'161', label:'161', m:392.99, pre:43833, lanc:47086},
+  {u:'151', label:'151', m:392.72, pre:43292, lanc:46505},
+  {u:'141', label:'141', m:393.36, pre:43075, lanc:46272},
+  {u:'131', label:'131', m:392.72, pre:42860, lanc:46041},
+  {u:'121', label:'121', m:392.57, pre:42645, lanc:45811},
+  {u:'111', label:'111', m:395.01, pre:42433, lanc:45582},
+  {u:'101', label:'101', m:394.93, pre:42220, lanc:45354},
+  {u:'91',  label:'91',  m:394.26, pre:42010, lanc:45014},
+  {u:'81',  label:'81',  m:395.05, pre:41799, lanc:44339},
+  {u:'72',  label:'72 (Duplex)', m:558.07, pre:36401, lanc:37618},
+  {u:'71',  label:'71',  m:389.14, pre:41591, lanc:43674},
+  {u:'62',  label:'62',  m:326.59, pre:41382, lanc:45582},
+  {u:'61',  label:'61',  m:391.98, pre:41382, lanc:43018},
+  {u:'52',  label:'52',  m:331.76, pre:41176, lanc:45014},
+  {u:'51',  label:'51',  m:388.63, pre:41176, lanc:42373},
+  {u:'42',  label:'42',  m:326.75, pre:40969, lanc:43674},
+  {u:'41',  label:'41',  m:393.45, pre:40969, lanc:41737},
+  {u:'32',  label:'32',  m:332.65, pre:40765, lanc:42373},
+  {u:'31',  label:'31',  m:390.10, pre:40765, lanc:41112},
+  {u:'22',  label:'22 (Garden)', m:342.95, pre:34672, lanc:36410},
+  {u:'21',  label:'21 (Garden)', m:475.87, pre:34672, lanc:36410},
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1625,38 +1655,51 @@ const PROJECTS = {
     simulador: {
       labelEntrada: 'Ato',
       temJanela: true,
-      labelMensais: 'Mensais (20x)',
-      labelAnuais: 'Anuais (2x)',
+      labelMensais: 'Mensais', // o "(Nx)" é montado em montarCamposSimulador() a partir de numMensaisDefault — nunca fica desatualizado
+      labelAnuais: 'Anuais',   // idem, a partir de numAnuais
       milestones: [
-        { label: 'Chave (30/08/2028)', tabLabel: 'Chave', desc: 'Chave (parcela única)', dateMode:'fixed', data: new Date(2028,7,30), defaultPct:10 },
-        { label: 'Financiamento (30/10/2028)', tabLabel: 'Financiamento', desc: 'Financiamento bancário', dateMode:'fixed', data: new Date(2028,9,30), defaultPct:60 }
+        { label: 'Chave', tabLabel: 'Chave', desc: 'Chave (parcela única)', dateMode:'relativeAto', mesesAposAto:23, defaultPct:10 },
+        { label: 'Financiamento', tabLabel: 'Financiamento', desc: 'Financiamento bancário', dateMode:'relativeAto', mesesAposAto:25, defaultPct:60 }
       ],
+      // Chave e Financiamento NÃO são datas fixas de calendário — são relativas ao Ato (23 e 25
+      // meses depois, confirmado comparando as tabelas de set/26 e out/26: nos dois PDFs as duas
+      // datas andaram junto com o Ato, mantendo sempre a mesma distância). Por isso usam
+      // dateMode:'relativeAto' (ver buildFlowRows) em vez de 'fixed' — nunca mais precisam de
+      // ajuste manual todo mês, só numMensaisDefault/numAnuais mudam com a tabela nova.
       defaultPcts: { entrada:5, janela:5, mensais:10, anuais:10 },
       numAnuais: 2, mensalInicio: 3, mergeAnualComMensal: false,
-      // ATUALIZADO (tabela SETEMBRO/2026): Ato passou de ago/26 pra set/26 — um mês a menos
-      // até as datas travadas de Chave/Financiamento, então 21 mensais viraram 20. O 1º reforço
-      // anual e o intervalo entre reforços continuam com os mesmos offsets (mês 4 e +12 meses a
-      // partir do Ato) — como são relativos ao Ato, o mês 4 acompanhou o Ato e passou a cair em
-      // jan/27 (era dez/26), e o mês 16 em jan/28 (era dez/27), batendo com a tabela nova.
-      // Chave e Financiamento são datas travadas e não mudam.
-      numMensaisDefault: 20, primeiroReforcoDefault: 4, intervaloReforcoDefault: 12,
+      // ATUALIZADO (tabela OUTUBRO/2026): Ato passou de set/26 pra out/26 — um mês a menos até a
+      // entrega, então 20 mensais viraram 19. O 1º reforço anual e o intervalo entre reforços
+      // continuam com os mesmos offsets (mês 4 e +12 meses a partir do Ato, batendo com fev/27 e
+      // fev/28 na tabela de outubro) — ajustar numMensaisDefault todo mês (cai ~1), revisando
+      // sempre primeiroReforcoDefault/intervaloReforcoDefault contra a tabela nova.
+      numMensaisDefault: 19, primeiroReforcoDefault: 4, intervaloReforcoDefault: 12,
       tabPrimeiroReforcoDefault: 4, tabIntervaloReforcoDefault: 12,
-      valorTotalDefault: 13500000, valorM2Default: 34800, metragemDefault: '388,00',
+      // valorTotalDefault/valorM2Default/metragemDefault foram removidos de propósito — o valor
+      // de referência do simulador É SEMPRE o preço de tabela real da unidade escolhida (ver
+      // refreshUnidadeInfo()); os campos começam em branco/zero até uma unidade ser selecionada,
+      // em vez de mostrar um valor de uma unidade-exemplo que ficaria desatualizado.
       dataEntregaCustomDefault: '2028-08-30',
       tabelaTermos: {
         pre:  { entrada:5, janela:5, mensais:10, anuais:10, milestone0:10, milestone1:60 },
         lanc: { entrada:5, janela:5, mensais:10, anuais:10, milestone0:10, milestone1:60 }
       },
-      flowLabel: 'Fluxo Padrão (Ato · 30/60 · 20 Mensais · 2 Anuais · Chave · Financiamento)',
-      estruturaHint: 'Preenchido com o plano oficial que a incorporadora oferece — ajuste livremente para a negociação de cada cliente. Chave e Financiamento têm data de entrega travada (ver Cronograma).',
+      flowLabel: 'Fluxo Padrão (Ato · 30/60 · 19 Mensais · 2 Anuais · Chave · Financiamento)',
+      estruturaHint: 'Preenchido com o plano oficial que a incorporadora oferece — ajuste livremente para a negociação de cada cliente. Chave e Financiamento acompanham o Ato (23 e 25 meses depois — ver Cronograma).',
       termosNotaExtra: ' Hoje o Quaddra Lorena só tem uma tabela oficial (não há pré-lançamento distinto) — os dois blocos abaixo vêm iguais; ajuste "Pré-lançamento" separadamente se um dia existir uma condição diferente.',
-      cronogramaHint: (m0, m1) => `A 1ª mensal só entra após a janela de 30/60 dias (mês 3). Chave e Financiamento caem em datas travadas, independente da data do ato: <strong>Chave 30/08/2028</strong> · <strong>Financiamento 30/10/2028</strong> (mês ${m0??'—'} e ${m1??'—'} a partir do ato).`,
+      cronogramaHint: (m0, m1) => `A 1ª mensal só entra após a janela de 30/60 dias (mês 3). Chave e Financiamento caem automaticamente 23 e 25 meses após o Ato, acompanhando a data do ato (mês ${m0??'—'} e ${m1??'—'} a partir do ato).`,
       reforcoExtraDisponivel: false, reforcoExtraDefaultOn: false, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
+      // customRowsDefault em percentual do valor de tabela da unidade escolhida (mesmo padrão do
+      // Jesuíno — ver montarCustomRowsDoProjeto). Este simulador "personalizado" só tem um bucket
+      // genérico "chave" (não distingue Chave de Financiamento), então aqui ele leva os dois
+      // juntos: 10%(Chave)+60%(Financiamento)=70%. "ato" leva Entrada+Janela juntos (5%+5%=10%,
+      // já que também não há um tipo "janela" separado neste simulador). offsetMeses de
+      // "mensais"/"anuais" seguem mensalInicio/primeiroReforcoDefault — ajustar junto se mudarem.
       customRowsDefault: [
-        {tipo:'ato', qtd:1, valor:1350000, offsetMeses:0},
-        {tipo:'mensais', qtd:20, valor:64286, offsetMeses:1},
-        {tipo:'anuais', qtd:2, valor:675000, offsetMeses:2},
-        {tipo:'chave', qtd:1, valor:9450000, offsetMeses:null}
+        {tipo:'ato', qtd:1, pct:10, offsetMeses:0},
+        {tipo:'mensais', qtd:19, pct:10, offsetMeses:3},
+        {tipo:'anuais', qtd:2, pct:10, offsetMeses:4},
+        {tipo:'chave', qtd:1, pct:70, offsetMeses:null}
       ]
     }
   },
@@ -1679,20 +1722,23 @@ const PROJECTS = {
     breakdownPorFinal: true,
     exportPrefix: 'Quaddra_Jesuino',
     buildUnits: buildJesuinoTree,
-    pricingTable: JESUINO_PRICING,
+    pricingTable: JESUINO_PRICING_FALLBACK,
     simulador: {
       labelEntrada: 'Sinal (ato)',
       temJanela: false,
-      labelMensais: 'Mensais (45x)',
-      labelAnuais: 'Anuais (4x)',
+      labelMensais: 'Mensais', // o "(Nx)" é montado em montarCamposSimulador() a partir de numMensaisDefault — nunca fica desatualizado
+      labelAnuais: 'Anuais',   // idem, a partir de numAnuais
       milestones: [
         { label: 'Chaves / Repasse', tabLabel: 'Chaves', desc: 'Chaves / Repasse', dateMode:'relative', mesesAposUltimaMensal:1, defaultPct:0 }
       ],
-      defaultPcts: { entrada:35, janela:0, mensais:0, anuais:50 },
+      defaultPcts: { entrada:35, janela:0, mensais:15, anuais:50 }, // 35+15+50=100% (Chaves/Repasse fica 0% do cliente — ver milestones)
       numAnuais: 4, mensalInicio: 1, mergeAnualComMensal: true,
-      numMensaisDefault: 45, primeiroReforcoDefault: 8, intervaloReforcoDefault: 12,
+      numMensaisDefault: 44, primeiroReforcoDefault: 7, intervaloReforcoDefault: 12,
       tabPrimeiroReforcoDefault: 4, tabIntervaloReforcoDefault: 12,
-      valorTotalDefault: 1600000, valorM2Default: 4200, metragemDefault: '389,05',
+      // valorTotalDefault/valorM2Default/metragemDefault foram removidos de propósito — o valor
+      // de referência do simulador É SEMPRE o preço de tabela real da unidade escolhida (ver
+      // refreshUnidadeInfo()); os campos começam em branco/zero até uma unidade ser selecionada,
+      // em vez de mostrar um valor de uma unidade-exemplo que ficaria desatualizado.
       dataEntregaCustomDefault: '2030-06-30',
       tabelaTermos: {
         pre:  { entrada:5, janela:0, mensais:15, anuais:10, milestone0:70, milestone1:0 },
@@ -1703,11 +1749,15 @@ const PROJECTS = {
       termosNotaExtra: '',
       cronogramaHint: (mChaves) => `Chaves cai automaticamente 1 mês após a última mensal (mês ${mChaves??48}).`,
       reforcoExtraDisponivel: true, reforcoExtraDefaultOn: true, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
+      // Linhas em percentual do valor de tabela da unidade escolhida (não mais R$ fixo de uma
+      // unidade de referência) — ver montarCustomRowsDoProjeto(). pct de cada bloco bate com
+      // defaultPcts (entrada 35 · mensais 15 · anuais 50) + Chaves/Repasse 0% do cliente = 100%.
+      // qtd da mensal = numMensaisDefault; offsetMeses da anual = primeiroReforcoDefault (mantenha os dois iguais).
       customRowsDefault: [
-        {tipo:'ato', qtd:1, valor:160000, offsetMeses:0},
-        {tipo:'mensais', qtd:45, valor:15000, offsetMeses:1},
-        {tipo:'anuais', qtd:4, valor:80000, offsetMeses:4},
-        {tipo:'chave', qtd:1, valor:960000, offsetMeses:null}
+        {tipo:'ato', qtd:1, pct:35, offsetMeses:0},
+        {tipo:'mensais', qtd:44, pct:15, offsetMeses:1},
+        {tipo:'anuais', qtd:4, pct:50, offsetMeses:7},
+        {tipo:'chave', qtd:1, pct:0, offsetMeses:null}
       ]
     }
   }
@@ -1806,8 +1856,48 @@ function hexParaRgbCsv(hex) {
   return [1, 2, 3].map(i => parseInt(m[i], 16)).join(',');
 }
 
-function selecionarProjeto(key) {
+// ═══════════════════════════════════════════════════════════════════
+//  DADOS MENSAIS (tabela de preços + fluxo de pagamento padrão do simulador) —
+//  vêm de "dados-lorena.json" / "dados-jesuino.json", publicados na MESMA PASTA
+//  deste HTML. Assim, atualizar o preço do mês ou o fluxo de pagamento padrão é
+//  só editar esses dois arquivos — não precisa mais mexer neste HTML todo mês.
+//  Se o arquivo não carregar (rede fora do ar, arquivo não publicado na pasta,
+//  erro de digitação no JSON etc.), o backoffice continua funcionando com os
+//  últimos valores embutidos no próprio HTML como rede de segurança (ver
+//  buildLorenaTabelaFallback() e JESUINO_PRICING_FALLBACK) — só avisa com um
+//  toast que os dados podem estar desatualizados, sem travar a tela.
+// ═══════════════════════════════════════════════════════════════════
+async function carregarDadosMensais(key) {
+  const url = `dados-${key}.json`;
+  try {
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const dados = await resp.json();
+    aplicarDadosMensais(key, dados);
+  } catch (err) {
+    console.error('Não foi possível carregar ' + url, err);
+    showToast(`Não encontrei "${url}" (tabela de preços / fluxo de pagamento) — usando os últimos valores salvos neste backoffice. Confira se o arquivo está publicado na mesma pasta do HTML.`, 'error', 7000);
+  }
+}
+
+function aplicarDadosMensais(key, dados) {
+  const proj = PROJECTS[key];
+  if (!proj || !dados || typeof dados !== 'object') return;
+  if (Array.isArray(dados.unidades) && dados.unidades.length) {
+    proj._unidadesTabela = dados.unidades; // Lorena: tabela completa (preço + geometria) por unidade
+  }
+  if (Array.isArray(dados.pricingTable) && dados.pricingTable.length) {
+    proj.pricingTable = dados.pricingTable; // Jesuíno: tabela de preço por m²
+  }
+  if (dados.simulador && typeof dados.simulador === 'object' && proj.simulador) {
+    Object.assign(proj.simulador, dados.simulador); // fluxo de pagamento padrão (ambos os projetos)
+  }
+}
+
+async function selecionarProjeto(key) {
   PROJETO_ATIVO = PROJECTS[key];
+  setSyncStatus('loading', 'Carregando tabela de preços...');
+  await carregarDadosMensais(key);
   document.documentElement.style.setProperty('--proj-primaria', PROJETO_ATIVO.corPrimaria);
   document.documentElement.style.setProperty('--proj-primaria-escura', PROJETO_ATIVO.corPrimariaEscura);
   document.documentElement.style.setProperty('--proj-acento', PROJETO_ATIVO.corAcento);
@@ -3407,6 +3497,9 @@ function refreshUnidadeInfo(){
   // Ao escolher a unidade, o valor total da proposta já entra com o preço de tabela dela
   // (evita simular sem querer com o valor genérico de outro cliente que ficou digitado ali)
   if(valueMode==='total') document.getElementById('valorTotal').value = Math.round(nominalTabela).toLocaleString('pt-BR');
+  // Mesma lógica pro fluxo padrão (Cenários): linhas em percentual (r.pct) recalculam em cima
+  // do valor de tabela desta unidade — ver montarCustomRowsDoProjeto().
+  montarCustomRowsDoProjeto();
   hint.innerHTML = 'Unidade '+un.label+' — área privativa total '+un.m.toLocaleString('pt-BR',{minimumFractionDigits:2})+' m² · '+
     (fase==='pre'?'Pré-lançamento':'Lançamento')+': '+fmtBRL2(rsm2)+'/m² → valor de tabela '+fmtBRLsim(nominalTabela)+'.';
   hint.className = 'hint strip no-print';
@@ -3540,10 +3633,28 @@ document.getElementById('addRowBtn').addEventListener('click',()=>{
 
 function montarCustomRowsDoProjeto(){
   const sim = window.PROJETO_ATIVO.simulador;
-  customRows = sim.customRowsDefault.map(r => ({
-    tipo: r.tipo, qtd: r.qtd, valor: r.valor,
-    dataInicio: r.offsetMeses===null ? null : (r.offsetMeses===0 ? todayISO() : addMonthsISO(todayISO(), r.offsetMeses))
-  }));
+  // Unidade real escolhida no simulador (se houver) — usada pra calcular o valor de cada linha
+  // quando ela vem em percentual (r.pct) em vez de R$ fixo (r.valor, formato antigo).
+  const un = currentUnidade();
+  const faseEl = document.getElementById('faseSelect');
+  const fase = faseEl ? faseEl.value : 'lanc';
+  const nominalTabela = un ? (fase==='pre' ? un.pre : un.lanc) * un.m : 0;
+  customRows = sim.customRowsDefault.map(r => {
+    let valor;
+    if (r.pct !== undefined) {
+      // % do valor de tabela da unidade escolhida, dividido pelas parcelas daquele bloco.
+      // Sem unidade escolhida ainda, nominalTabela é 0 e a linha nasce zerada (mesmo padrão
+      // já usado em valorTotal/metragem — nada de "unidade-exemplo" genérica aqui).
+      const totalBloco = nominalTabela * r.pct / 100;
+      valor = r.qtd > 0 ? totalBloco / r.qtd : totalBloco;
+    } else {
+      valor = r.valor; // formato antigo, ainda em R$ fixo por linha
+    }
+    return {
+      tipo: r.tipo, qtd: r.qtd, valor: Math.round(valor),
+      dataInicio: r.offsetMeses===null ? null : (r.offsetMeses===0 ? todayISO() : addMonthsISO(todayISO(), r.offsetMeses))
+    };
+  });
   renderCustomRows();
 }
 window.montarCustomRowsDoProjeto = montarCustomRowsDoProjeto;
@@ -3600,6 +3711,7 @@ function buildFlowRows(cfg, valor, cv, n, primeiro, intervalo, dataAto){
   cfg.milestones.forEach((ms, idx) => {
     let mes, data;
     if (ms.dateMode === 'fixed') { data = ms.data; mes = mesesEntre(dataAto, ms.data); }
+    else if (ms.dateMode === 'relativeAto') { mes = ms.mesesAposAto; data = addMonths(dataAto, mes); }
     else { mes = n + ms.mesesAposUltimaMensal; data = addMonths(dataAto, mes); }
     rows.push({mes, data, desc: ms.desc, valor: valor*cv['milestone'+idx], chaves:true});
     mesesInfo[idx] = mes;
@@ -4106,8 +4218,11 @@ function montarCamposSimulador(){
 
   document.getElementById('labelCampoEntrada').textContent = cfg.labelEntrada;
   document.getElementById('rowCampoJanela').style.display = cfg.temJanela ? 'flex' : 'none';
-  document.getElementById('labelCampoMensais').textContent = cfg.labelMensais;
-  document.getElementById('labelCampoAnuais').textContent = cfg.labelAnuais;
+  // "(Nx)" sempre batendo com numMensaisDefault/numAnuais — que vêm do dados-*.json e mudam
+  // todo mês — em vez de um texto fixo que ficaria desatualizado junto (ver comentário acima,
+  // em PROJECTS.*.simulador.labelMensais/labelAnuais).
+  document.getElementById('labelCampoMensais').textContent = `${cfg.labelMensais} (${cfg.numMensaisDefault}x)`;
+  document.getElementById('labelCampoAnuais').textContent = `${cfg.labelAnuais} (${cfg.numAnuais}x)`;
   document.getElementById('labelCampoMilestone0').textContent = cfg.milestones[0].label;
   document.getElementById('rowCampoMilestone1').style.display = temMilestone2 ? 'flex' : 'none';
   if (temMilestone2) document.getElementById('labelCampoMilestone1').textContent = cfg.milestones[1].label;
@@ -4147,11 +4262,14 @@ function montarCamposSimulador(){
     if (temMilestone2) document.getElementById(prefix+'Milestone1').value = termos.milestone1;
   });
 
-  document.getElementById('valorTotal').value = '0'; // idem — só entra com valor real quando uma unidade é escolhida
-  document.getElementById('valorM2').value = cfg.valorM2Default;
-  document.getElementById('metragemRef').value = cfg.metragemDefault;
-  document.getElementById('metragemM2').value = cfg.metragemDefault;
-  document.getElementById('metragemCustom').value = cfg.metragemDefault;
+  // valorTotal/valorM2/metragem começam zerados/em branco — só entram com valor real quando uma
+  // unidade é escolhida (refreshUnidadeInfo() preenche a partir do preço de tabela dela). Nada
+  // de "unidade-exemplo" genérica aqui, que ficaria desatualizada a cada mudança de tabela.
+  document.getElementById('valorTotal').value = '0';
+  document.getElementById('valorM2').value = '0';
+  document.getElementById('metragemRef').value = '';
+  document.getElementById('metragemM2').value = '';
+  document.getElementById('metragemCustom').value = '';
   document.getElementById('dataEntregaCustom').value = cfg.dataEntregaCustomDefault;
 
   document.getElementById('reforcoExtraToggle').checked = cfg.reforcoExtraDefaultOn;

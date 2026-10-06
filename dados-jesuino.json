@@ -1,0 +1,301 @@
+{
+  "_comentario": "Dados mensais do Quaddra Jesuíno — tabela de preço por m² (pricingTable) e fluxo de pagamento padrão do simulador. Editar e publicar junto do quaddra_unificado.html, na mesma pasta, como \"dados-jesuino.json\". Regras combinadas com o Rogério: (1) numMensaisDefault = meses entre hoje e a entrega (a última mensal nunca pode passar da data de entrega) — cai ~1 por mês; primeiroReforcoDefault e o offsetMeses da linha 'anuais' em customRowsDefault devem ficar sempre iguais entre si. (2) customRowsDefault.pct é percentual do valor de tabela da UNIDADE ESCOLHIDA no simulador (não mais R$ fixo de uma unidade de referência) — os pct de entrada/mensais/anuais devem somar com a milestone 'Chaves/Repasse' (hoje 0%) fechando 100%, e bater com defaultPcts. (3) OUTUBRO/2026: aplicada uma correção de +0,25% sobre o valor total de todas as 33 unidades (equivalente a +0,25% no preço por m², já que a metragem não muda) — aplicada nas duas colunas, pré-lançamento (pre) e lançamento (lanc), arredondando pro inteiro mais próximo.",
+  "pricingTable": [
+    {
+      "u": "281",
+      "label": "281 (Duplex)",
+      "m": 611.4,
+      "pre": 56670,
+      "lanc": 59115
+    },
+    {
+      "u": "271",
+      "label": "271",
+      "m": 393.43,
+      "pre": 54230,
+      "lanc": 56705
+    },
+    {
+      "u": "261",
+      "label": "261",
+      "m": 393.43,
+      "pre": 52908,
+      "lanc": 55594
+    },
+    {
+      "u": "251",
+      "label": "251",
+      "m": 393.51,
+      "pre": 51617,
+      "lanc": 54504
+    },
+    {
+      "u": "241",
+      "label": "241",
+      "m": 393.05,
+      "pre": 50605,
+      "lanc": 53567
+    },
+    {
+      "u": "231",
+      "label": "231",
+      "m": 393.05,
+      "pre": 49613,
+      "lanc": 52645
+    },
+    {
+      "u": "221",
+      "label": "221",
+      "m": 392.72,
+      "pre": 48640,
+      "lanc": 51739
+    },
+    {
+      "u": "211",
+      "label": "211",
+      "m": 395.01,
+      "pre": 47686,
+      "lanc": 50850
+    },
+    {
+      "u": "201",
+      "label": "201",
+      "m": 392.72,
+      "pre": 46752,
+      "lanc": 49975
+    },
+    {
+      "u": "191",
+      "label": "191",
+      "m": 395.01,
+      "pre": 45834,
+      "lanc": 49115
+    },
+    {
+      "u": "181",
+      "label": "181",
+      "m": 395.01,
+      "pre": 44936,
+      "lanc": 48270
+    },
+    {
+      "u": "171",
+      "label": "171",
+      "m": 392.72,
+      "pre": 44381,
+      "lanc": 47675
+    },
+    {
+      "u": "161",
+      "label": "161",
+      "m": 392.99,
+      "pre": 43833,
+      "lanc": 47086
+    },
+    {
+      "u": "151",
+      "label": "151",
+      "m": 392.72,
+      "pre": 43292,
+      "lanc": 46505
+    },
+    {
+      "u": "141",
+      "label": "141",
+      "m": 393.36,
+      "pre": 43075,
+      "lanc": 46272
+    },
+    {
+      "u": "131",
+      "label": "131",
+      "m": 392.72,
+      "pre": 42860,
+      "lanc": 46041
+    },
+    {
+      "u": "121",
+      "label": "121",
+      "m": 392.57,
+      "pre": 42645,
+      "lanc": 45811
+    },
+    {
+      "u": "111",
+      "label": "111",
+      "m": 395.01,
+      "pre": 42433,
+      "lanc": 45582
+    },
+    {
+      "u": "101",
+      "label": "101",
+      "m": 394.93,
+      "pre": 42220,
+      "lanc": 45354
+    },
+    {
+      "u": "91",
+      "label": "91",
+      "m": 394.26,
+      "pre": 42010,
+      "lanc": 45014
+    },
+    {
+      "u": "81",
+      "label": "81",
+      "m": 395.05,
+      "pre": 41799,
+      "lanc": 44339
+    },
+    {
+      "u": "72",
+      "label": "72 (Duplex)",
+      "m": 558.07,
+      "pre": 36401,
+      "lanc": 37618
+    },
+    {
+      "u": "71",
+      "label": "71",
+      "m": 389.14,
+      "pre": 41591,
+      "lanc": 43674
+    },
+    {
+      "u": "62",
+      "label": "62",
+      "m": 326.59,
+      "pre": 41382,
+      "lanc": 45582
+    },
+    {
+      "u": "61",
+      "label": "61",
+      "m": 391.98,
+      "pre": 41382,
+      "lanc": 43018
+    },
+    {
+      "u": "52",
+      "label": "52",
+      "m": 331.76,
+      "pre": 41176,
+      "lanc": 45014
+    },
+    {
+      "u": "51",
+      "label": "51",
+      "m": 388.63,
+      "pre": 41176,
+      "lanc": 42373
+    },
+    {
+      "u": "42",
+      "label": "42",
+      "m": 326.75,
+      "pre": 40969,
+      "lanc": 43674
+    },
+    {
+      "u": "41",
+      "label": "41",
+      "m": 393.45,
+      "pre": 40969,
+      "lanc": 41737
+    },
+    {
+      "u": "32",
+      "label": "32",
+      "m": 332.65,
+      "pre": 40765,
+      "lanc": 42373
+    },
+    {
+      "u": "31",
+      "label": "31",
+      "m": 390.1,
+      "pre": 40765,
+      "lanc": 41112
+    },
+    {
+      "u": "22",
+      "label": "22 (Garden)",
+      "m": 342.95,
+      "pre": 34672,
+      "lanc": 36410
+    },
+    {
+      "u": "21",
+      "label": "21 (Garden)",
+      "m": 475.87,
+      "pre": 34672,
+      "lanc": 36410
+    }
+  ],
+  "simulador": {
+    "defaultPcts": {
+      "entrada": 35,
+      "janela": 0,
+      "mensais": 15,
+      "anuais": 50
+    },
+    "numAnuais": 4,
+    "mensalInicio": 1,
+    "mergeAnualComMensal": true,
+    "numMensaisDefault": 44,
+    "primeiroReforcoDefault": 7,
+    "intervaloReforcoDefault": 12,
+    "tabPrimeiroReforcoDefault": 4,
+    "tabIntervaloReforcoDefault": 12,
+    "dataEntregaCustomDefault": "2030-06-30",
+    "tabelaTermos": {
+      "pre": {
+        "entrada": 5,
+        "janela": 0,
+        "mensais": 15,
+        "anuais": 10,
+        "milestone0": 70,
+        "milestone1": 0
+      },
+      "lanc": {
+        "entrada": 10,
+        "janela": 0,
+        "mensais": 15,
+        "anuais": 15,
+        "milestone0": 60,
+        "milestone1": 0
+      }
+    },
+    "reforcoExtraDisponivel": true,
+    "reforcoExtraDefaultOn": true,
+    "reforcoExtraDefaultPct": 15,
+    "reforcoExtraDefaultMes": "2026-12",
+    "customRowsDefault": [
+      {
+        "tipo": "ato",
+        "qtd": 1,
+        "pct": 35,
+        "offsetMeses": 0
+      },
+      {
+        "tipo": "mensais",
+        "qtd": 44,
+        "pct": 15,
+        "offsetMeses": 1
+      },
+      {
+        "tipo": "anuais",
+        "qtd": 4,
+        "pct": 50,
+        "offsetMeses": 7
+      },
+      {
+        "tipo": "chave",
+        "qtd": 1,
+        "pct": 0,
+        "offsetMeses": null
+      }
+    ]
+  }
+}
