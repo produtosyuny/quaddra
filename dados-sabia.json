@@ -1,0 +1,462 @@
+{
+  "_comentario": "Dados mensais do Quaddra Sabiá (Moema) — tabela de preço por m² (pricingTable) e fluxo de pagamento padrão do simulador. Editar e publicar junto do quaddra_unificado.html, na mesma pasta, como \"dados-sabia.json\". PROJETO EM STAND-BY: ainda não tem tabela de preços oficial nem plano comercial aprovado, então pre/lanc e todos os percentuais do simulador ficam em 0 de propósito — não é um erro, é o estado real do projeto. A estrutura de unidades (torre única, final 1 = 300m² do 1º ao 28º andar; final 2 = 370m² do 1º ao 18º e 400m² do 19º ao 28º) é informação PRÉVIA passada pelo Rogério — Gardens/coberturas ainda não foram definidos, todas as unidades entram como 'Tipo' até isso ser confirmado (ver buildSabiaTree() no HTML). Assim que a incorporadora liberar a tabela de preços e o plano de pagamento: (1) preencher pre/lanc de cada unidade abaixo com o preço por m² real; (2) preencher defaultPcts/tabelaTermos/customRowsDefault do bloco simulador com os percentuais reais (mesma lógica já usada no Jesuíno — ver dados-jesuino.json); (3) revisar numMensaisDefault/numAnuais/datas contra o cronograma real de obra.",
+  "pricingTable": [
+    {
+      "u": "11",
+      "label": "11",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "21",
+      "label": "21",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "31",
+      "label": "31",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "41",
+      "label": "41",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "51",
+      "label": "51",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "61",
+      "label": "61",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "71",
+      "label": "71",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "81",
+      "label": "81",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "91",
+      "label": "91",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "101",
+      "label": "101",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "111",
+      "label": "111",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "121",
+      "label": "121",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "131",
+      "label": "131",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "141",
+      "label": "141",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "151",
+      "label": "151",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "161",
+      "label": "161",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "171",
+      "label": "171",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "181",
+      "label": "181",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "191",
+      "label": "191",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "201",
+      "label": "201",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "211",
+      "label": "211",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "221",
+      "label": "221",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "231",
+      "label": "231",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "241",
+      "label": "241",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "251",
+      "label": "251",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "261",
+      "label": "261",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "271",
+      "label": "271",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "281",
+      "label": "281",
+      "m": 300,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "12",
+      "label": "12",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "22",
+      "label": "22",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "32",
+      "label": "32",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "42",
+      "label": "42",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "52",
+      "label": "52",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "62",
+      "label": "62",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "72",
+      "label": "72",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "82",
+      "label": "82",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "92",
+      "label": "92",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "102",
+      "label": "102",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "112",
+      "label": "112",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "122",
+      "label": "122",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "132",
+      "label": "132",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "142",
+      "label": "142",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "152",
+      "label": "152",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "162",
+      "label": "162",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "172",
+      "label": "172",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "182",
+      "label": "182",
+      "m": 370,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "192",
+      "label": "192",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "202",
+      "label": "202",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "212",
+      "label": "212",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "222",
+      "label": "222",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "232",
+      "label": "232",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "242",
+      "label": "242",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "252",
+      "label": "252",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "262",
+      "label": "262",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "272",
+      "label": "272",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    },
+    {
+      "u": "282",
+      "label": "282",
+      "m": 400,
+      "pre": 0,
+      "lanc": 0
+    }
+  ],
+  "simulador": {
+    "defaultPcts": {
+      "entrada": 0,
+      "janela": 0,
+      "mensais": 0,
+      "anuais": 0
+    },
+    "numAnuais": 4,
+    "mensalInicio": 1,
+    "mergeAnualComMensal": true,
+    "numMensaisDefault": 44,
+    "primeiroReforcoDefault": 7,
+    "intervaloReforcoDefault": 12,
+    "tabPrimeiroReforcoDefault": 4,
+    "tabIntervaloReforcoDefault": 12,
+    "dataEntregaCustomDefault": "",
+    "tabelaTermos": {
+      "pre": {
+        "entrada": 0,
+        "janela": 0,
+        "mensais": 0,
+        "anuais": 0,
+        "milestone0": 0,
+        "milestone1": 0
+      },
+      "lanc": {
+        "entrada": 0,
+        "janela": 0,
+        "mensais": 0,
+        "anuais": 0,
+        "milestone0": 0,
+        "milestone1": 0
+      }
+    },
+    "reforcoExtraDisponivel": false,
+    "reforcoExtraDefaultOn": false,
+    "reforcoExtraDefaultPct": 15,
+    "reforcoExtraDefaultMes": "2026-12",
+    "customRowsDefault": [
+      {
+        "tipo": "ato",
+        "qtd": 1,
+        "pct": 0,
+        "offsetMeses": 0
+      },
+      {
+        "tipo": "mensais",
+        "qtd": 44,
+        "pct": 0,
+        "offsetMeses": 1
+      },
+      {
+        "tipo": "anuais",
+        "qtd": 4,
+        "pct": 0,
+        "offsetMeses": 7
+      },
+      {
+        "tipo": "chave",
+        "qtd": 1,
+        "pct": 0,
+        "offsetMeses": null
+      }
+    ]
+  }
+}

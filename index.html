@@ -124,6 +124,15 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .card-projeto .info .meta-row b { color: var(--text); font-weight: 600; }
 .card-projeto .entrar { margin-top: 0.9rem; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.35rem; }
 
+.card-projeto.card-em-breve { opacity: 0.92; }
+.card-projeto.card-em-breve:hover { transform: translateY(-3px); }
+.card-projeto .badge-em-breve {
+  position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2;
+  background: rgba(255,255,255,0.94); color: #141414;
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 0.3rem 0.6rem; border-radius: 999px;
+}
+
 .selecao-footer { margin-top: 2.5rem; font-size: 0.72rem; color: var(--text-muted); }
 
 /* ══════════ TELA -1 · LOGIN ══════════ */
@@ -1436,6 +1445,7 @@ textarea { resize: vertical; min-height: 65px; }
       <div class="table-panel">
         <div class="table-panel-head">
           <h2>Cronograma detalhado — Proposta</h2>
+          <button class="btn primary no-print" id="btnExportWhatsApp">💬 Exportar para WhatsApp</button>
         </div>
         <div class="table-scroll">
           <table>
@@ -1633,6 +1643,35 @@ const JESUINO_PRICING_FALLBACK = [
   {u:'21',  label:'21 (Garden)', m:475.87, pre:34672, lanc:36410},
 ];
 
+// Quaddra Sabiá (Moema) — torre única, informações PRÉVIAS do projeto (sem planta oficial
+// nem tabela de preços ainda). id_unidade = "{andar}{final}", igual ao Jesuíno.
+//   Final 1: andares 1 a 28, 300m² cada (28 unidades).
+//   Final 2: andares 1 a 18 com 370m², andares 19 a 28 com 400m² (muda de planta no 19º).
+// Gardens/coberturas AINDA NÃO DEFINIDOS (projeto em desenvolvimento) — por enquanto todas
+// as unidades entram como "Tipo"; assim que o projeto confirmar quais andares/unidades são
+// Garden ou Cobertura, ajustar o `tipo` (e a metragem, se for diferente) das linhas certas
+// abaixo. Vagas: 4 em todas as unidades (confirmado).
+function buildSabiaTree() {
+  const list = [];
+  function add(id, andar, final, metragem, tipo){
+    list.push({ id_unidade:id, numero_unidade:id, torre:null, andar, final, metragem, vagas:4,
+      valor_tabela:null, tipo, especial:null, status_espelho:"DISPONIVEL", cliente_nome:"",
+      observacoes:"", origem_venda:"", fase_esteira:1, fluxo_financeiro:[] });
+  }
+  for (let a = 1; a <= 28; a++) add(`${a}1`, a, 1, 300, "Tipo");
+  for (let a = 1; a <= 18; a++) add(`${a}2`, a, 2, 370, "Tipo");
+  for (let a = 19; a <= 28; a++) add(`${a}2`, a, 2, 400, "Tipo");
+  return list;
+}
+
+// Rede de segurança: tabela de preço por m² do Sabiá embutida no HTML (mesmo papel do
+// JESUINO_PRICING_FALLBACK acima) — só usada se "dados-sabia.json" não carregar. Preços
+// ainda EM STAND-BY (pre/lanc = 0) — o projeto ainda não tem tabela oficial de preços.
+// Atualizar aqui (e em dados-sabia.json) assim que a incorporadora liberar os valores.
+const SABIA_PRICING_FALLBACK = buildSabiaTree().map(u => ({
+  u: u.id_unidade, label: u.id_unidade, m: u.metragem, pre: 0, lanc: 0
+}));
+
 // ═══════════════════════════════════════════════════════════════════
 //  CONFIG DOS PROJETOS — motor único, cada Quaddra é só dados aqui
 // ═══════════════════════════════════════════════════════════════════
@@ -1748,7 +1787,11 @@ const PROJECTS = {
       estruturaHint: 'Preenchido com o plano oficial que a incorporadora oferece — ajuste livremente para a negociação de cada cliente.',
       termosNotaExtra: '',
       cronogramaHint: (mChaves) => `Chaves cai automaticamente 1 mês após a última mensal (mês ${mChaves??48}).`,
-      reforcoExtraDisponivel: true, reforcoExtraDefaultOn: true, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
+      // reforcoExtraDefaultOn:false — o reforço extra é OPCIONAL (fica disponível pro usuário
+      // ligar na negociação de um cliente específico), não entra somado por padrão. Com ele
+      // ligado por padrão, a soma dos % já nascia em 115% (100% da estrutura base + 15% do
+      // reforço extra) antes de qualquer edição — confundindo quem abria o simulador.
+      reforcoExtraDisponivel: true, reforcoExtraDefaultOn: false, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
       // Linhas em percentual do valor de tabela da unidade escolhida (não mais R$ fixo de uma
       // unidade de referência) — ver montarCustomRowsDoProjeto(). pct de cada bloco bate com
       // defaultPcts (entrada 35 · mensais 15 · anuais 50) + Chaves/Repasse 0% do cliente = 100%.
@@ -1760,8 +1803,72 @@ const PROJECTS = {
         {tipo:'chave', qtd:1, pct:0, offsetMeses:null}
       ]
     }
+  },
+  sabia: {
+    key: 'sabia',
+    nome: 'Quaddra Sabiá',
+    corPrimaria: '#603B25',
+    corPrimariaEscura: '#3B2416',
+    corAcento: '#C9A184',
+    identidadeLabel: 'Kraft',
+    metaTorres: 'Torre única',
+    metaEntrega: 'Data a definir',
+    googleScriptUrl: "https://script.google.com/macros/s/AKfycbxN2mBlu9Z7QZJ0D5pW9p0Ups9PMIoKvDykOgMEKSdakbaSGis5f7h8lzGmoiP8Ukz3Cg/exec",
+    atendimentosScriptUrl: "https://script.google.com/macros/s/AKfycbwZYMfMoK_wZH9ByHAIypwdo2r9I472n2XVScQowoEiKMtvYayvGb6839fV0y5vQ7u02A/exec",
+    torres: null,
+    breakdownPorFinal: true, // prédio único, igual ao Jesuíno — agrupa por "final" em vez de torre
+    exportPrefix: 'Quaddra_Sabia',
+    buildUnits: buildSabiaTree,
+    pricingTable: SABIA_PRICING_FALLBACK,
+    simulador: {
+      labelEntrada: 'Sinal (ato)',
+      temJanela: false,
+      labelMensais: 'Mensais',
+      labelAnuais: 'Anuais',
+      milestones: [
+        { label: 'Chaves / Repasse', tabLabel: 'Chaves', desc: 'Chaves / Repasse', dateMode:'relative', mesesAposUltimaMensal:1, defaultPct:0 }
+      ],
+      // ═══ ESTRUTURA EM STAND-BY ═══ — montada com base no modelo do Jesuíno (mesmo formato:
+      // sinal + mensais + anuais fundidos na mensal + Chaves/Repasse no fim), mas SEM nenhum
+      // % de condição comercial real ainda — o Sabiá não tem plano de pagamento aprovado.
+      // Por isso os percentuais abaixo ficam todos em 0 (a soma mostra "0% — deveria ser 100%"
+      // de propósito, como um aviso visual de que falta configurar). numMensaisDefault/numAnuais/
+      // primeiroReforcoDefault só existem pra o simulador não quebrar (evita divisão por zero);
+      // ajustar tudo — incluindo esses — assim que o plano comercial for definido. Enquanto isso,
+      // dá pra simular um cliente na mão: digite metragem, valor de tabela e data de entrega
+      // direto nos campos do simulador (não precisa de unidade com preço cadastrado pra isso).
+      defaultPcts: { entrada:0, janela:0, mensais:0, anuais:0 },
+      numAnuais: 4, mensalInicio: 1, mergeAnualComMensal: true,
+      numMensaisDefault: 44, primeiroReforcoDefault: 7, intervaloReforcoDefault: 12,
+      tabPrimeiroReforcoDefault: 4, tabIntervaloReforcoDefault: 12,
+      dataEntregaCustomDefault: '',
+      tabelaTermos: {
+        pre:  { entrada:0, janela:0, mensais:0, anuais:0, milestone0:0, milestone1:0 },
+        lanc: { entrada:0, janela:0, mensais:0, anuais:0, milestone0:0, milestone1:0 }
+      },
+      flowLabel: 'Fluxo Padrão — plano comercial a definir',
+      estruturaHint: 'Projeto em desenvolvimento — plano comercial ainda não aprovado. Os percentuais abaixo estão zerados de propósito; ajuste livremente pra simular um cenário, mas nada aqui é oficial ainda.',
+      termosNotaExtra: ' O Quaddra Sabiá ainda não tem tabela de pré-lançamento/lançamento definida — os dois blocos abaixo vêm zerados.',
+      cronogramaHint: (mChaves) => `Chaves cai automaticamente 1 mês após a última mensal (mês ${mChaves??'—'}).`,
+      reforcoExtraDisponivel: false, reforcoExtraDefaultOn: false, reforcoExtraDefaultPct: 15, reforcoExtraDefaultMes: '2026-12',
+      customRowsDefault: [
+        {tipo:'ato', qtd:1, pct:0, offsetMeses:0},
+        {tipo:'mensais', qtd:44, pct:0, offsetMeses:1},
+        {tipo:'anuais', qtd:4, pct:0, offsetMeses:7},
+        {tipo:'chave', qtd:1, pct:0, offsetMeses:null}
+      ]
+    }
   }
 };
+
+// Projetos que já têm card na tela de seleção, pra dar visibilidade do que vem por aí,
+// mas ainda não têm backoffice funcionando (sem planilha/simulador configurado). Ficam
+// fora de PROJECTS de propósito — o resto do app (torre switch, tema, simulador etc.)
+// assume que todo item de PROJECTS é um backoffice completo, e esses ainda não são.
+// Clicar só mostra um aviso "em breve" (ver avisarProjetoEmBreve) em vez de abrir o app.
+// (Quaddra Sabiá saiu daqui e virou um PROJECTS completo assim que a estrutura de unidades
+// ficou disponível — ver PROJECTS.sabia. Fica vazio até o próximo projeto novo aparecer.)
+const PROJETOS_EM_BREVE = [];
 
 var PROJETO_ATIVO = null;
 
@@ -1833,7 +1940,7 @@ function fazerLogout() {
 // ═══════════════════════════════════════════════════════════════════
 function montarCardsSelecao() {
   const wrap = document.getElementById('cardsProjetos');
-  wrap.innerHTML = Object.values(PROJECTS).map(p => `
+  const cardsAtivos = Object.values(PROJECTS).map(p => `
     <div class="card-projeto" onclick="selecionarProjeto('${p.key}')">
       <div class="capa" style="background:${p.corPrimaria}; color:${p.corAcento}">
         <div class="wordmark">QUADDRA<span class="sub">${p.nome.replace('Quaddra ','').toUpperCase()}</span></div>
@@ -1846,6 +1953,25 @@ function montarCardsSelecao() {
       </div>
     </div>
   `).join('');
+  const cardsEmBreve = PROJETOS_EM_BREVE.map(p => `
+    <div class="card-projeto card-em-breve" onclick="avisarProjetoEmBreve('${p.nome}')">
+      <div class="capa" style="background:${p.corPrimaria}; color:${p.corAcento}">
+        <span class="badge-em-breve">Em breve</span>
+        <div class="wordmark">QUADDRA<span class="sub">${p.nome.replace('Quaddra ','').toUpperCase()}</span></div>
+      </div>
+      <div class="info">
+        <span class="tag">Identidade · ${p.identidadeLabel}</span>
+        <h3>${p.nome}</h3>
+        <div class="meta-row"><span>Em preparação</span><b>Data a definir</b></div>
+        <div class="entrar" style="color:${p.corPrimaria}"><i class="ti ti-clock"></i> Em breve</div>
+      </div>
+    </div>
+  `).join('');
+  wrap.innerHTML = cardsAtivos + cardsEmBreve;
+}
+
+function avisarProjetoEmBreve(nome) {
+  showToast(`${nome} ainda não está disponível — em breve!`, 'info');
 }
 
 // "#RRGGBB" -> "r,g,b" (pra usar em rgba(var(--proj-primaria-rgb), 0.1) no CSS,
@@ -3930,6 +4056,203 @@ updateReforcoExtraLabel();
 document.querySelectorAll('#panelPadrao input, #panelCustom input').forEach(inp=>{
   if(inp.id==='valorReferencia' || inp.id==='valorReferenciaCustom') return;
   inp.addEventListener('input', renderDebounced);
+});
+
+// ---------- EXPORTAR PROPOSTA PARA WHATSAPP ----------
+// Monta o mesmo texto que o Rogério hoje gera colando a página inteira no DeepSeek —
+// mas direto da estrutura do simulador (cv/%, datas, valor da unidade), sem depender
+// da tabela linha-a-linha (onde reforço anual pode vir somado dentro de uma mensal).
+// Cada "bloco" abaixo é uma condição de pagamento (Ato, Mensais, Anuais, Chave,
+// Financiamento, Reforço extra, 30/60 dias) com sua própria data (ou intervalo de
+// datas) e valor de parcela — a mesma divisão que aparece nos campos de % da tela.
+function formatMesAnoWhats(data){
+  return MESES_ABREV[data.getMonth()] + '/' + String(data.getFullYear()).slice(-2);
+}
+function formatIntervaloDatasWhats(datas, qtd){
+  // qtd é o nº real de parcelas do bloco — pode ser maior que datas.length quando só
+  // guardamos a 1ª e a última data pra montar o intervalo (ex.: 19 mensais vira só 2
+  // datas aqui, mas o texto precisa dizer "19 mensais", não "2 mensais").
+  const q = qtd !== undefined ? qtd : datas.length;
+  if (q <= 1) return formatMesAnoWhats(datas[0]);
+  if (q === 2) return formatMesAnoWhats(datas[0]) + ' e ' + formatMesAnoWhats(datas[datas.length - 1]);
+  return formatMesAnoWhats(datas[0]) + ' a ' + formatMesAnoWhats(datas[datas.length - 1]);
+}
+function fmtPctSimplesWhats(v){
+  let s = v.toFixed(1).replace('.', ',');
+  if (s.endsWith(',0')) s = s.slice(0, -2);
+  return s;
+}
+function montarBlocosPropostaPadrao(cfg, valor, cv, n, primeiro, intervalo, dataAto, reforcoExtraInfo){
+  const blocos = [];
+  if (cv.entrada > 0) {
+    blocos.push({ label: cfg.labelEntrada, qtd: 1, valorParcela: valor * cv.entrada, datas: [dataAto] });
+  }
+  if (cfg.temJanela && cv.janela > 0) {
+    // "30/60 dias" já deixa claro que são 2 parcelas — não repete o "2" na frente do label.
+    blocos.push({ label: '30/60 dias', qtd: 2, semContagem: true, valorParcela: valor * cv.janela / 2, datas: [addMonths(dataAto, 1), addMonths(dataAto, 2)] });
+  }
+  if (n > 0 && cv.mensais > 0) {
+    const datas = [addMonths(dataAto, cfg.mensalInicio), addMonths(dataAto, cfg.mensalInicio - 1 + n)];
+    blocos.push({ label: cfg.labelMensais, qtd: n, valorParcela: valor * cv.mensais / n, datas });
+  }
+  if (reforcoExtraInfo) {
+    blocos.push({ label: 'Reforço extra', qtd: 1, valorParcela: reforcoExtraInfo.valor, datas: [reforcoExtraInfo.data] });
+  }
+  if (cfg.numAnuais > 0 && cv.anuais > 0) {
+    const datas = [];
+    for (let i = 0; i < cfg.numAnuais; i++) datas.push(addMonths(dataAto, primeiro + i * intervalo));
+    blocos.push({ label: cfg.labelAnuais, qtd: cfg.numAnuais, valorParcela: valor * cv.anuais / cfg.numAnuais, datas });
+  }
+  cfg.milestones.forEach((ms, idx) => {
+    const pct = cv['milestone' + idx];
+    if (!(pct > 0)) return; // milestone zerada na negociação (ex.: Chave 0%) não entra na proposta
+    let mes;
+    let data;
+    if (ms.dateMode === 'fixed') { data = ms.data; }
+    else if (ms.dateMode === 'relativeAto') { mes = ms.mesesAposAto; data = addMonths(dataAto, mes); }
+    else { mes = n + ms.mesesAposUltimaMensal; data = addMonths(dataAto, mes); }
+    blocos.push({ label: ms.label, qtd: 1, valorParcela: valor * pct, datas: [data] });
+  });
+  blocos.sort((a, b) => a.datas[0] - b.datas[0]);
+  return blocos;
+}
+function montarBlocosPropostaCustom(){
+  const dataEntregaEl = document.getElementById('dataEntregaCustom');
+  const dataEntrega = dataEntregaEl.value ? parseISOLocal(dataEntregaEl.value) : parseISOLocal(todayISO());
+  const blocos = [];
+  customRows.forEach(r => {
+    if (!(r.valor > 0)) return;
+    const info = TIPO_INFO[r.tipo];
+    let datas;
+    if (r.tipo === 'chave') {
+      datas = [dataEntrega];
+    } else {
+      const qtd = info.qtdFixa !== null ? info.qtdFixa : (Math.round(r.qtd) || 1);
+      const dataInicio = r.dataInicio || todayISO();
+      datas = [];
+      for (let i = 0; i < qtd; i++) {
+        datas.push(info.intervalo > 0 ? parseISOLocal(addMonthsISO(dataInicio, i * info.intervalo)) : parseISOLocal(dataInicio));
+      }
+    }
+    // tira o "(...)" do fim do label do tipo (ex.: "Trimestrais (3 em 3 meses)" -> "Trimestrais")
+    const labelLimpo = info.label.replace(/\s*\([^)]*\)\s*$/, '');
+    blocos.push({ label: labelLimpo, qtd: datas.length, valorParcela: r.valor, datas });
+  });
+  blocos.sort((a, b) => a.datas[0] - b.datas[0]);
+  return blocos;
+}
+function formatLinhaBlocoWhats(bloco, nominalTotal){
+  const totalBloco = bloco.valorParcela * bloco.qtd;
+  const pct = nominalTotal > 0 ? (totalBloco / nominalTotal * 100) : 0;
+  const labelTxt = (bloco.qtd > 1 && !bloco.semContagem) ? `${bloco.qtd} ${bloco.label.toLowerCase()}` : bloco.label;
+  return `🔸 *${labelTxt} (${formatIntervaloDatasWhats(bloco.datas, bloco.qtd)}):* ${fmtBRL2(bloco.valorParcela)} (${fmtPctSimplesWhats(pct)}%)`;
+}
+function gerarTextoPropostaWhatsApp(){
+  const cfg = window.PROJETO_ATIVO.simulador;
+  const un = currentUnidade();
+  // A proposta exportada sempre mostra a tabela de LANÇAMENTO (valor maior) na "Tabela de
+  // referência", não importa qual fase (Pré-lançamento/Lançamento) está selecionada no
+  // simulador no momento — essa seleção só afeta o cálculo interno de desconto/VP de tabela.
+  const faseLabel = 'lançamento';
+
+  let blocos, metragem, valorReferencia, dataBase;
+
+  if (activeFlow === 'padrao') {
+    const valor = getUnitValuePadrao();
+    const cv = lerCamposValores('campo', cfg);
+    const n = Math.round(num('numMensais')) || cfg.numMensaisDefault;
+    const primeiro = Math.round(num('primeiroReforco')) || cfg.primeiroReforcoDefault;
+    const intervalo = Math.round(num('intervaloReforco')) || cfg.intervaloReforcoDefault;
+    dataBase = parseISOLocal(document.getElementById('dataAto').value) || parseISOLocal(todayISO());
+
+    let reforcoExtraInfo = null;
+    if (document.getElementById('reforcoExtraToggle').checked) {
+      const extraPct = num('reforcoExtraPct') / 100;
+      const [ey, em] = document.getElementById('reforcoExtraData').value.split('-').map(Number);
+      const mesExtra = (ey - dataBase.getFullYear()) * 12 + (em - 1 - dataBase.getMonth());
+      if (mesExtra >= 0 && extraPct > 0) reforcoExtraInfo = { valor: valor * extraPct, data: new Date(ey, em - 1, dataBase.getDate()) };
+    }
+
+    blocos = montarBlocosPropostaPadrao(cfg, valor, cv, n, primeiro, intervalo, dataBase, reforcoExtraInfo);
+    metragem = num('metragemRef');
+    valorReferencia = num('valorReferencia');
+  } else {
+    dataBase = parseISOLocal(document.getElementById('dataBaseCustom').value) || parseISOLocal(todayISO());
+    blocos = montarBlocosPropostaCustom();
+    metragem = num('metragemCustom');
+    valorReferencia = num('valorReferenciaCustom');
+  }
+
+  if (!blocos.length) { showToast('Defina a estrutura de pagamento antes de exportar a proposta.', 'error'); return null; }
+  if (!(metragem > 0)) { showToast('Informe a metragem antes de exportar a proposta.', 'error'); return null; }
+
+  // Com unidade real selecionada, recalcula a "Tabela de referência" direto do preço de
+  // Lançamento da unidade (un.lanc) — ignora o que estiver no campo valorReferencia(Custom),
+  // que reflete a fase escolhida no simulador (pode estar em Pré-lançamento). Sem unidade
+  // real (valor de tabela digitado manualmente), mantém o que foi digitado.
+  if (un) valorReferencia = un.lanc * un.m;
+
+  const nominal = blocos.reduce((s, b) => s + b.valorParcela * b.qtd, 0);
+  const taxaAnual = num(activeFlow === 'padrao' ? 'taxaAnual' : 'taxaAnualCustom') / 100;
+  const r = monthlyRate(taxaAnual);
+  const vp = blocos.reduce((s, b) => s + b.datas.reduce((s2, d) => {
+    const mes = (d.getFullYear() - dataBase.getFullYear()) * 12 + (d.getMonth() - dataBase.getMonth());
+    return s2 + b.valorParcela / Math.pow(1 + r, mes);
+  }, 0), 0);
+
+  const nomeProjeto = window.PROJETO_ATIVO.nome.replace('Quaddra ', '').trim();
+  const unidadeLabel = un ? `${nomeProjeto} ${un.label}` : `${nomeProjeto} (unidade avulsa)`;
+
+  const linhas = blocos.map(b => formatLinhaBlocoWhats(b, nominal)).join('\n');
+
+  const partes = [
+    '📄 *Proposta comercial*',
+    '',
+    `📍 *Unidade:* ${unidadeLabel}`,
+    `*Área privativa:* ${metragem.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} m²`,
+    '',
+    `*Tabela de referência (${faseLabel}):*`,
+    `*Valor total:* ${valorReferencia > 0 ? fmtBRL2(valorReferencia) : '—'}`,
+    `*Valor do m²:* ${valorReferencia > 0 ? fmtBRL2(valorReferencia / metragem) : '—'}`,
+    '',
+    '──────────────────',
+    '*Condições de pagamento:*',
+    '',
+    linhas,
+    '',
+    '──────────────────',
+    `*Valor total proposta:* ${fmtBRL2(nominal)}`,
+    `*Valor do m²:* ${fmtBRL2(nominal / metragem)}`,
+    `*Valor presente:* ${fmtBRL2(vp)}`,
+    '',
+    '📌 *Proposta válida por 72h. Valores nominais, sujeitos à disponibilidade.*',
+    '',
+    '💬 *Dúvidas? Estou à disposição.*'
+  ];
+  return partes.join('\n');
+}
+async function copiarTextoParaAreaTransferencia(texto){
+  if (navigator.clipboard && window.isSecureContext) {
+    try { await navigator.clipboard.writeText(texto); return true; } catch (e) { /* cai no fallback abaixo */ }
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+document.getElementById('btnExportWhatsApp').addEventListener('click', async () => {
+  const texto = gerarTextoPropostaWhatsApp();
+  if (!texto) return;
+  const ok = await copiarTextoParaAreaTransferencia(texto);
+  if (ok) showToast('Proposta copiada — já pode colar no WhatsApp.', 'success');
+  else showToast('Não foi possível copiar automaticamente. Selecione e copie o texto manualmente.', 'error', 6000);
 });
 
 // ---------- PV FIX UI ----------
