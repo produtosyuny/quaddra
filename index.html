@@ -365,6 +365,7 @@ textarea { resize: vertical; min-height: 65px; }
 .resumo-exec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
 @media (max-width: 1100px) { .resumo-exec-grid { grid-template-columns: 1fr; } }
 
+.rx-header-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .rx-header, .atd-header { display: flex; align-items: center; gap: 0.9rem; }
 .rx-header-icon, .atd-header-icon { width: 42px; height: 42px; border-radius: 10px; background: var(--proj-primaria); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
 .rx-header h2, .atd-header h2 { font-size: 1.4rem; font-weight: 700; color: var(--text); margin: 0; }
@@ -940,13 +941,18 @@ textarea { resize: vertical; min-height: 65px; }
 
 <!-- ABA RESUMO EXECUTIVO -->
 <div id="tab-resumo" class="tab-content">
-  <div class="panel-resumo">
-    <div class="rx-header">
-      <div class="rx-header-icon"><i class="ti ti-layout-grid"></i></div>
-      <div>
-        <h2>Resumo Executivo</h2>
-        <p id="rxSubtitulo">Visão geral do empreendimento</p>
+  <div class="panel-resumo" id="captureAreaResumo">
+    <div class="rx-header-row">
+      <div class="rx-header">
+        <div class="rx-header-icon"><i class="ti ti-layout-grid"></i></div>
+        <div>
+          <h2>Resumo Executivo</h2>
+          <p id="rxSubtitulo">Visão geral do empreendimento</p>
+        </div>
       </div>
+      <button class="btn btn-sec btn-sm" id="btnExportResumoImagem" onclick="exportarResumoImagem()">
+        <i class="ti ti-camera"></i> Imagem
+      </button>
     </div>
 
     <div class="rx-hero-panel">
@@ -3463,6 +3469,26 @@ function exportarEspelhoImagem() {
     a.href = canvas.toDataURL();
     a.click();
     showToast('Imagem salva!', 'success');
+  });
+}
+
+function exportarResumoImagem() {
+  const area = document.getElementById("captureAreaResumo");
+  if (!area) return;
+  showToast('Gerando imagem...', 'info', 2000);
+  // O Resumo Executivo usa tema escuro (cor própria de cada Quaddra, via --proj-primaria-escura) —
+  // ao contrário do Espelho (sempre branco), aqui a cor de fundo muda por projeto. Em vez de
+  // forçar um backgroundColor fixo, lê a cor de fundo já renderizada do próprio painel, pra sair
+  // igual ao que está na tela não importa o projeto selecionado.
+  const bg = getComputedStyle(area).backgroundColor || '#1a1a1a';
+  html2canvas(area, { backgroundColor: bg, logging: false, scale: 2, useCORS: true }).then(canvas => {
+    const a = document.createElement('a');
+    a.download = `Resumo_Executivo_${PROJETO_ATIVO.exportPrefix}.png`;
+    a.href = canvas.toDataURL();
+    a.click();
+    showToast('Imagem salva!', 'success');
+  }).catch(() => {
+    showToast('Não foi possível gerar a imagem. Tente novamente.', 'error', 5000);
   });
 }
 
